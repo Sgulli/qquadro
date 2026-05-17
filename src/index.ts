@@ -2,7 +2,7 @@
  * @module excel-wrapper
  *
  * Fluent, fully-typed Excel builder for Node.js.
- * Powered by ExcelJS — supports styles, formulas, merged cells,
+ * Powered by ExcelTS — supports styles, formulas, merged cells,
  * headers, freeze panes, auto-filter, and streaming (memory-safe) output.
  *
  * @example
@@ -48,10 +48,13 @@ export { F, ref, range, rect, sum, average, count, max, min, add, sub, mul, div,
 export {
   Styles,
   applyStyle,
+  formatHeaderFooterSection,
   toExcelFont,
   toExcelFill,
   toExcelBorder,
   toExcelAlignment,
+  resolveNumberFormat,
+  colLetter,
 } from "./utils.js";
 
 // ── Types ────────────────────────────────────────────────────────────────────

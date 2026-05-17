@@ -1,6 +1,6 @@
-import ExcelJS from "exceljs";
-import fs from "fs";
-import path from "path";
+import { Workbook as ExcelWorkbook } from "@cj-tech-master/excelts";
+import fs from "node:fs";
+import path from "node:path";
 import { SheetBuilder } from "./sheet-builder.js";
 import type { SheetOptions, WorkbookOptions, WriteResult } from "./types.js";
 
@@ -39,13 +39,13 @@ import type { SheetOptions, WorkbookOptions, WriteResult } from "./types.js";
  * ```
  */
 export class WorkbookBuilder {
-  private readonly _wb: ExcelJS.Workbook;
+  private readonly _wb: ExcelWorkbook;
   private readonly _opts: WorkbookOptions;
-  private _sheetBuilders: SheetBuilder[] = [];
+  private readonly _sheets: SheetBuilder[] = [];
 
   constructor(opts: WorkbookOptions = {}) {
     this._opts = opts;
-    this._wb = new ExcelJS.Workbook();
+    this._wb = new ExcelWorkbook();
     this._applyWorkbookMeta();
   }
 
@@ -66,7 +66,6 @@ export class WorkbookBuilder {
 
   /**
    * Add a sheet and get back the `SheetBuilder` for imperative use.
-   * Call `.done()` on the builder when finished.
    */
   addSheet(opts: SheetOptions): SheetBuilder;
 
@@ -75,19 +74,14 @@ export class WorkbookBuilder {
     configure?: (sheet: SheetBuilder) => void,
   ): this | SheetBuilder {
     const ws = this._wb.addWorksheet(opts.name);
-    let resolveBuilder!: () => void;
-    const builder = new SheetBuilder(ws, opts, () => resolveBuilder?.());
-    this._sheetBuilders.push(builder);
+    const builder = new SheetBuilder(ws, opts);
+    this._sheets.push(builder);
 
     if (configure) {
       configure(builder);
       return this;
     }
 
-    // Imperative path — return the builder
-    resolveBuilder = () => {
-      /* no-op; commit happens on write */
-    };
     return builder;
   }
 
@@ -96,7 +90,7 @@ export class WorkbookBuilder {
   /**
    * Write the workbook to disk.
    *
-   * - Uses **streaming mode** when `opts.streamToFile` was set in the
+   * - Uses **streaming mode** when `opts.useStreaming` was set in the
    *   constructor — O(1) memory for arbitrarily large files.
    * - Otherwise writes via an in-memory buffer.
    *
@@ -106,13 +100,17 @@ export class WorkbookBuilder {
     const resolved = path.resolve(outputPath);
     const dir = path.dirname(resolved);
 
+    await this._finalizeAll();
+
     // Ensure the target directory exists
     await fs.promises.mkdir(dir, { recursive: true });
 
-    if (this._opts.streamToFile) {
+    if (this._opts.useStreaming) {
       // ── Streaming path ─────────────────────────────────────────────────────
       const stream = fs.createWriteStream(resolved);
-      await this._wb.xlsx.write(stream);
+      await this._wb.xlsx.write(stream, {
+        useSharedStrings: this._opts.useSharedStrings,
+      });
 
       await new Promise<void>((ok, err) => {
         stream.on("finish", ok);
@@ -124,7 +122,9 @@ export class WorkbookBuilder {
     }
 
     // ── Buffer path ────────────────────────────────────────────────────────
-    await this._wb.xlsx.writeFile(resolved);
+    await this._wb.xlsx.writeFile(resolved, {
+      useSharedStrings: this._opts.useSharedStrings,
+    });
     const { size } = await fs.promises.stat(resolved);
     return { filePath: resolved, sizeBytes: size };
   }
@@ -133,27 +133,32 @@ export class WorkbookBuilder {
    * Return the workbook as a `Buffer` (e.g. for HTTP responses).
    */
   async toBuffer(): Promise<Buffer> {
-    return this._wb.xlsx.writeBuffer() as unknown as Promise<Buffer>;
+    await this._finalizeAll();
+    const buf = await this._wb.xlsx.writeBuffer({
+      useSharedStrings: this._opts.useSharedStrings,
+    });
+    return Buffer.from(buf);
   }
 
   /**
-   * Return the underlying ExcelJS `Workbook` for advanced operations not
+   * Return the underlying ExcelTS `Workbook` for advanced operations not
    * covered by this wrapper.
    */
-  get workbook(): ExcelJS.Workbook {
+  get workbook(): ExcelWorkbook {
     return this._wb;
   }
 
   // ── Private ────────────────────────────────────────────────────────────────
 
+  private async _finalizeAll(): Promise<void> {
+    await Promise.all(this._sheets.map((s) => s._finalize()));
+  }
+
   private _applyWorkbookMeta(): void {
-    const { author, company, created, useSharedStrings } = this._opts;
+    const { author, company, created } = this._opts;
     if (author) this._wb.creator = author;
     if (company) this._wb.company = company;
     this._wb.created = created ?? new Date();
-    if (useSharedStrings !== undefined)
-      (this._wb as unknown as { useSharedStrings: boolean }).useSharedStrings =
-        useSharedStrings;
     this._wb.calcProperties.fullCalcOnLoad = true;
   }
 }

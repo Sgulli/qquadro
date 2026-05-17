@@ -1,10 +1,3 @@
-import type ExcelJS from "exceljs";
-
-// ─── Re-exports for convenience ──────────────────────────────────────────────
-
-export type Workbook = ExcelJS.Workbook;
-export type Worksheet = ExcelJS.Worksheet;
-
 // ─── Alignment ───────────────────────────────────────────────────────────────
 
 export type HorizontalAlignment =
@@ -255,7 +248,7 @@ export interface WorkbookOptions {
    * When set, the workbook operates in streaming mode for
    * memory-efficient output of large datasets.
    */
-  streamToFile?: string;
+  useStreaming?: boolean;
 }
 
 // ─── Builder Return Types ────────────────────────────────────────────────────

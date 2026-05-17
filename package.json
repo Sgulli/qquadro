@@ -25,13 +25,13 @@
   "keywords": [
     "excel",
     "xlsx",
-    "exceljs",
+    "excelts",
     "typescript",
     "builder"
   ],
   "license": "MIT",
   "dependencies": {
-    "exceljs": "^4.4.0"
+    "@cj-tech-master/excelts": "^9.5.4"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

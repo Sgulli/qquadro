@@ -1,5 +1,5 @@
-import ExcelJS from "exceljs";
-import { applyStyle } from "./utils.js";
+import type { Worksheet, Row, Cell, CellFormulaValue, WorksheetView } from "@cj-tech-master/excelts";
+import { applyStyle, formatHeaderFooterSection, colLetter } from "./utils.js";
 import type {
   CellPrimitive,
   CellStyle,
@@ -11,33 +11,23 @@ import type {
   SheetOptions,
 } from "./types.js";
 
-// ─── Internal row buffer (streaming-friendly) ────────────────────────────────
-
-interface BufferedRow {
-  data: RowData;
-  options?: RowOptions;
-}
-
 // ─── SheetBuilder ────────────────────────────────────────────────────────────
 
 /**
  * Fluent builder for a single worksheet.
  *
  * Obtain an instance via `WorkbookBuilder.addSheet()`.
- * Call `.done()` to return control to the parent builder.
  */
 export class SheetBuilder {
-  private readonly _ws: ExcelJS.Worksheet;
+  private readonly _ws: Worksheet;
   private _columns: ColumnDef[] = [];
-  private _merges: MergeRange[] = [];
-  private _rows: BufferedRow[] = [];
   private _headerWritten = false;
+  private _protectionConfig?: { password?: string };
 
   /** @internal */
   constructor(
-    ws: ExcelJS.Worksheet,
+    ws: Worksheet,
     private readonly _opts: SheetOptions,
-    private readonly _done: () => void,
   ) {
     this._ws = ws;
     this._applySheetOptions();
@@ -120,8 +110,7 @@ export class SheetBuilder {
    * sheet.addRow(["Alice", 42000], { height: 20 })
    */
   addRow(data: RowData, options?: RowOptions): this {
-    this._rows.push({ data, options });
-    this._flushRow({ data, options });
+    this._flushRow(data, options);
     return this;
   }
 
@@ -174,7 +163,6 @@ export class SheetBuilder {
    * sheet.merge({ range: "A1:E1", value: "Q1 Report", style: Styles.header })
    */
   merge(region: MergeRange): this {
-    this._merges.push(region);
     this._ws.mergeCells(region.range);
 
     const [tl] = region.range.split(":");
@@ -209,24 +197,15 @@ export class SheetBuilder {
    * Set the width of a specific column (letter or 1-indexed number).
    */
   colWidth(col: string | number, width: number): this {
-    const c =
-      typeof col === "string"
-        ? this._ws.getColumn(col)
-        : this._ws.getColumn(col);
-    c.width = width;
+    this._ws.getColumn(col).width = width;
     return this;
   }
 
   /**
-   * Auto-fit column width based on header length + padding.
-   * Call after writing headers.
+   * Auto-fit column widths based on actual cell content.
    */
-  autoFitColumns(paddingChars = 4): this {
-    this._columns.forEach((def, i) => {
-      const col = this._ws.getColumn(i + 1);
-      const headerLen = def.header.length;
-      if (!def.width) col.width = Math.max(headerLen + paddingChars, 10);
-    });
+  autoFitColumns(startCol?: number | string, endCol?: number | string): this {
+    this._ws.autoFitColumns(startCol, endCol);
     return this;
   }
 
@@ -237,8 +216,10 @@ export class SheetBuilder {
    * E.g. `freeze(1, 0)` freezes the header row.
    */
   freeze(row: number, col = 0): this {
+    const prev = this._ws.views?.[0];
     this._ws.views = [
       {
+        ...(prev ? { showGridLines: prev.showGridLines, zoomScale: prev.zoomScale } : {}),
         state: "frozen",
         xSplit: col,
         ySplit: row,
@@ -262,13 +243,13 @@ export class SheetBuilder {
     return this;
   }
 
-  // ── Done ───────────────────────────────────────────────────────────────────
+  // ── Finalization ───────────────────────────────────────────────────────────
 
-  /**
-   * Finalise this sheet and return to the parent WorkbookBuilder.
-   */
-  done(): void {
-    this._done();
+  /** @internal Apply deferred async operations (e.g. sheet protection). */
+  async _finalize(): Promise<void> {
+    if (this._protectionConfig) {
+      await this._ws.protect(this._protectionConfig.password ?? "");
+    }
   }
 
   // ── Private helpers ────────────────────────────────────────────────────────
@@ -282,14 +263,11 @@ export class SheetBuilder {
     if (opts.defaultRowHeight !== undefined) {
       this._ws.properties.defaultRowHeight = opts.defaultRowHeight;
     }
-    if (opts.showGridLines === false) {
-      this._ws.views = [{ showGridLines: false }];
-    }
-    if (opts.zoom !== undefined) {
-      this._ws.views = [
-        ...(this._ws.views ?? []),
-        { zoomScale: opts.zoom } as ExcelJS.WorksheetView,
-      ];
+    if (opts.showGridLines === false || opts.zoom !== undefined) {
+      const view: Partial<WorksheetView> = {};
+      if (opts.showGridLines === false) view.showGridLines = false;
+      if (opts.zoom !== undefined) view.zoomScale = opts.zoom;
+      this._ws.views = [view];
     }
     if (opts.freeze) {
       const { row = 0, col = 0 } = opts.freeze;
@@ -304,37 +282,39 @@ export class SheetBuilder {
         fitToHeight: opts.pageSetup.fitToHeight ?? 0,
       });
       if (opts.pageSetup.margins) {
-        this._ws.pageSetup.margins = opts.pageSetup.margins as ExcelJS.Margins;
+        this._ws.pageSetup.margins = {
+          left: 0.7, right: 0.7, top: 0.75, bottom: 0.75,
+          header: 0.3, footer: 0.3,
+          ...opts.pageSetup.margins,
+        };
       }
     }
     if (opts.headerFooter) {
       const hf = opts.headerFooter;
-      const flatSection = (s: NonNullable<typeof hf.oddHeader>): string =>
-        [
-          s.left && `&L${s.left}`,
-          s.center && `&C${s.center}`,
-          s.right && `&R${s.right}`,
-        ]
-          .filter(Boolean)
-          .join("");
       if (hf.oddHeader)
-        this._ws.headerFooter.oddHeader = flatSection(hf.oddHeader);
+        this._ws.headerFooter.oddHeader = formatHeaderFooterSection(
+          hf.oddHeader,
+        );
       if (hf.oddFooter)
-        this._ws.headerFooter.oddFooter = flatSection(hf.oddFooter);
+        this._ws.headerFooter.oddFooter = formatHeaderFooterSection(
+          hf.oddFooter,
+        );
       if (hf.evenHeader)
-        this._ws.headerFooter.evenHeader = flatSection(hf.evenHeader);
+        this._ws.headerFooter.evenHeader = formatHeaderFooterSection(
+          hf.evenHeader,
+        );
       if (hf.evenFooter)
-        this._ws.headerFooter.evenFooter = flatSection(hf.evenFooter);
+        this._ws.headerFooter.evenFooter = formatHeaderFooterSection(
+          hf.evenFooter,
+        );
     }
     if (opts.protection) {
-      this._ws.protect(opts.protection.password ?? "", {});
+      this._protectionConfig = { password: opts.protection.password };
     }
   }
 
-  private _flushRow(buffered: BufferedRow): void {
-    const { data, options } = buffered;
-
-    let excelRow: ExcelJS.Row;
+  private _flushRow(data: RowData, options?: RowOptions): void {
+    let excelRow: Row;
 
     if (Array.isArray(data)) {
       const rowValues = data.map(toExcelValue);
@@ -369,12 +349,12 @@ export class SheetBuilder {
     excelRow.commit();
   }
 
-  private _writeValue(cell: ExcelJS.Cell, value: CellValue | undefined): void {
+  private _writeValue(cell: Cell, value: CellValue | undefined): void {
     if (value === undefined || value === null) return;
     if (isFormula(value)) {
       cell.value = toFormulaValue(value);
     } else {
-      cell.value = value as ExcelJS.CellValue;
+      cell.value = value;
     }
   }
 }
@@ -388,38 +368,27 @@ function isFormula(
     typeof val === "object" &&
     val !== null &&
     !(val instanceof Date) &&
-    "formula" in val
+    "formula" in val &&
+    typeof (val as { formula: unknown }).formula === "string"
   );
 }
 
 function normalizeFormula(f: string): string {
-  return f.replace(/^=+/g, "");
+  return f.startsWith("=") ? f.slice(1) : f;
 }
 
 function toFormulaValue(v: {
   formula: string;
   result?: CellPrimitive;
-}): ExcelJS.CellFormulaValue {
-  const fv: ExcelJS.CellFormulaValue = { formula: normalizeFormula(v.formula) };
+}): CellFormulaValue {
+  const fv: CellFormulaValue = { formula: normalizeFormula(v.formula) };
   if (v.result !== undefined && v.result !== null) fv.result = v.result;
   return fv;
 }
 
-function toExcelValue(val: CellValue): unknown {
-  if (isFormula(val)) {
-    const fv: Record<string, unknown> = { formula: normalizeFormula(val.formula) };
-    if (val.result !== undefined && val.result !== null) fv.result = val.result;
-    return fv;
-  }
-  return val;
+function toExcelValue(val: CellValue): CellPrimitive | CellFormulaValue {
+  if (isFormula(val)) return toFormulaValue(val);
+  return val as CellPrimitive;
 }
 
-function colLetter(col: number): string {
-  let result = "";
-  while (col > 0) {
-    const rem = (col - 1) % 26;
-    result = String.fromCharCode(65 + rem) + result;
-    col = Math.floor((col - 1) / 26);
-  }
-  return result;
-}
+

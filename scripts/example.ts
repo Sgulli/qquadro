@@ -204,7 +204,7 @@ async function main() {
   await new WorkbookBuilder({
     author: "Excel Wrapper Demo",
     company: "Acme Corp",
-    useSharedStrings: true, // Reduces file size for repeated strings
+    useSharedStrings: true,
   })
 
     // ── Sheet 1: Sales ───────────────────────────────────────────────────────
@@ -437,7 +437,7 @@ async function main() {
           style: highlight,
         });
 
-        sheet.autoFitColumns(6);
+        sheet.autoFitColumns();
       },
     )
 

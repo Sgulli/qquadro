@@ -1,9 +1,9 @@
-# excel-wrapper
+# quadro
 
-Fluent, fully-typed Excel builder for Node.js. Powered by [ExcelJS](https://github.com/exceljs/exceljs).
+Fluent, fully-typed Excel builder for Node.js. Powered by [ExcelTS](https://github.com/cjnoname/excelts).
 
 ```ts
-import { WorkbookBuilder, Styles, F } from "excel-wrapper";
+import { WorkbookBuilder, Styles, F } from "quadro";
 
 await new WorkbookBuilder({ author: "Acme Corp" })
   .addSheet({ name: "Sales" }, (sheet) => {
@@ -30,7 +30,7 @@ await new WorkbookBuilder({ author: "Acme Corp" })
 ## Install
 
 ```
-npm install excel-wrapper
+npm install quadro
 ```
 
 Requires Node 18+.
@@ -42,7 +42,7 @@ Requires Node 18+.
 - **Styles** — presets (`Styles.header`, `Styles.currency`, `Styles.totalRow`) or custom
 - **Merged cells** — `.merge()` with value & style in one call
 - **Freeze panes** + **auto-filter**
-- **Streaming** — constant memory for large files via `streamToFile` option
+- **Streaming** — constant memory for large files via `useStreaming` option
 - **ESM + CJS** — dual package with exports map
 - **TypeScript** — full type declarations
 
@@ -89,7 +89,7 @@ const { filePath, sizeBytes } = await wb.write("./output/report.xlsx");
 ### Streaming (large files)
 
 ```ts
-const wb = new WorkbookBuilder({ streamToFile: "./output/large.xlsx" });
+const wb = new WorkbookBuilder({ useStreaming: true });
 // add rows — memory usage stays constant
 ```
 

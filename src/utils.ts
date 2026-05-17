@@ -1,4 +1,11 @@
-import type ExcelJS from "exceljs";
+import type {
+  Cell,
+  Fill as ExcelFill,
+  Font as ExcelFont,
+  Borders as ExcelBorders,
+  Alignment as ExcelAlignment,
+  Border as ExcelBorder,
+} from "@cj-tech-master/excelts";
 import {
   BUILTIN_FORMATS,
   type Alignment,
@@ -6,18 +13,19 @@ import {
   type CellStyle,
   type Fill,
   type Font,
+  type HeaderFooterSection,
   type NumberFormat,
 } from "./types.js";
 
 // ─── Font ────────────────────────────────────────────────────────────────────
 
-export function toExcelFont(font: Font): Partial<ExcelJS.Font> {
+export function toExcelFont(font: Font): Partial<ExcelFont> {
   return {
     name: font.name,
     size: font.size,
     bold: font.bold,
     italic: font.italic,
-    underline: font.underline as ExcelJS.Font["underline"],
+    underline: font.underline,
     strike: font.strike,
     color: font.color ? { argb: normalizeArgb(font.color) } : undefined,
     vertAlign: font.vertAlign,
@@ -26,7 +34,7 @@ export function toExcelFont(font: Font): Partial<ExcelJS.Font> {
 
 // ─── Fill ────────────────────────────────────────────────────────────────────
 
-export function toExcelFill(fill: Fill): ExcelJS.Fill {
+export function toExcelFill(fill: Fill): ExcelFill {
   if (fill.type === "solid") {
     return {
       type: "pattern",
@@ -60,15 +68,15 @@ export function toExcelFill(fill: Fill): ExcelJS.Fill {
 
 function toExcelBorderSide(
   side: NonNullable<Border["top"]>,
-): Partial<ExcelJS.Border> {
+): Partial<ExcelBorder> {
   return {
     style: side.style,
     color: side.color ? { argb: normalizeArgb(side.color) } : undefined,
   };
 }
 
-export function toExcelBorder(border: Border): Partial<ExcelJS.Borders> {
-  const result: Partial<ExcelJS.Borders> = {};
+export function toExcelBorder(border: Border): Partial<ExcelBorders> {
+  const result: Partial<ExcelBorders> = {};
   if (border.top) result.top = toExcelBorderSide(border.top);
   if (border.bottom) result.bottom = toExcelBorderSide(border.bottom);
   if (border.left) result.left = toExcelBorderSide(border.left);
@@ -85,14 +93,14 @@ export function toExcelBorder(border: Border): Partial<ExcelJS.Borders> {
 
 // ─── Alignment ───────────────────────────────────────────────────────────────
 
-export function toExcelAlignment(a: Alignment): Partial<ExcelJS.Alignment> {
+export function toExcelAlignment(a: Alignment): Partial<ExcelAlignment> {
   return {
-    horizontal: a.horizontal as ExcelJS.Alignment["horizontal"],
-    vertical: a.vertical as ExcelJS.Alignment["vertical"],
+    horizontal: a.horizontal,
+    vertical: a.vertical,
     wrapText: a.wrapText,
     shrinkToFit: a.shrinkToFit,
     indent: a.indent,
-    textRotation: a.textRotation as ExcelJS.Alignment["textRotation"],
+    textRotation: a.textRotation,
   };
 }
 
@@ -104,10 +112,7 @@ export function resolveNumberFormat(fmt: NumberFormat): string {
 
 // ─── Apply Style ─────────────────────────────────────────────────────────────
 
-export function applyStyle(
-  cell: ExcelJS.Cell,
-  style: CellStyle | undefined,
-): void {
+export function applyStyle(cell: Cell, style: CellStyle | undefined): void {
   if (!style) return;
   if (style.font) cell.font = toExcelFont(style.font);
   if (style.fill) cell.fill = toExcelFill(style.fill);
@@ -115,6 +120,21 @@ export function applyStyle(
   if (style.alignment) cell.alignment = toExcelAlignment(style.alignment);
   if (style.numberFormat) cell.numFmt = resolveNumberFormat(style.numberFormat);
   if (style.protection) cell.protection = style.protection;
+}
+
+// ─── Header / Footer ─────────────────────────────────────────────────────────
+
+/** Builds an Excel header/footer string from left, center, and right sections. */
+export function formatHeaderFooterSection(
+  section: HeaderFooterSection,
+): string {
+  return [
+    section.left && `&L${section.left}`,
+    section.center && `&C${section.center}`,
+    section.right && `&R${section.right}`,
+  ]
+    .filter(Boolean)
+    .join("");
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -128,6 +148,16 @@ function normalizeArgb(hex: string): string {
   );
 }
 
+export function colLetter(n: number): string {
+  let r = "";
+  while (n > 0) {
+    const rem = (n - 1) % 26;
+    r = String.fromCharCode(65 + rem) + r;
+    n = Math.floor((n - 1) / 26);
+  }
+  return r;
+}
+
 // ─── Preset Styles ───────────────────────────────────────────────────────────
 
 export const Styles = {
@@ -137,14 +167,14 @@ export const Styles = {
     fill: { type: "solid", color: "FF2B579A" },
     alignment: { horizontal: "center", vertical: "middle" },
     border: { bottom: { style: "medium", color: "FF1A3A6B" } },
-  } satisfies CellStyle,
+  } as const satisfies CellStyle,
 
   /** Lighter blue — sub-section headers */
   subHeader: {
     font: { bold: true, name: "Arial", size: 10, color: "FF1F497D" },
     fill: { type: "solid", color: "FFDCE6F1" },
     alignment: { horizontal: "left", vertical: "middle" },
-  } satisfies CellStyle,
+  } as const satisfies CellStyle,
 
   /** Yellow-tinted bold — totals / summary rows */
   totalRow: {
@@ -154,28 +184,28 @@ export const Styles = {
       top: { style: "thin", color: "FFBFBFBF" },
       bottom: { style: "double", color: "FF000000" },
     },
-  } satisfies CellStyle,
+  } as const satisfies CellStyle,
 
   /** Right-aligned currency format */
   currency: {
     numberFormat: "currency",
     font: { name: "Arial", size: 10 },
     alignment: { horizontal: "right" },
-  } satisfies CellStyle,
+  } as const satisfies CellStyle,
 
   /** Right-aligned percentage format (two decimals) */
   percent: {
     numberFormat: "percentDecimal",
     font: { name: "Arial", size: 10 },
     alignment: { horizontal: "right" },
-  } satisfies CellStyle,
+  } as const satisfies CellStyle,
 
   /** Centered date format */
   date: {
     numberFormat: "date",
     font: { name: "Arial", size: 10 },
     alignment: { horizontal: "center" },
-  } satisfies CellStyle,
+  } as const satisfies CellStyle,
 
   /** Thin grey border on all four sides */
   boxBorder: {
@@ -185,20 +215,20 @@ export const Styles = {
       left: { style: "thin", color: "FFBFBFBF" },
       right: { style: "thin", color: "FFBFBFBF" },
     },
-  } satisfies CellStyle,
+  } as const satisfies CellStyle,
 
   /** Blue font — financial-model convention for hardcoded inputs */
   inputCell: {
     font: { color: "FF0000FF", name: "Arial", size: 10 },
-  } satisfies CellStyle,
+  } as const satisfies CellStyle,
 
   /** Black font — financial-model convention for formula cells */
   formulaCell: {
     font: { color: "FF000000", name: "Arial", size: 10 },
-  } satisfies CellStyle,
+  } as const satisfies CellStyle,
 
   /** Green font — financial-model convention for cross-sheet links */
   linkCell: {
     font: { color: "FF008000", name: "Arial", size: 10 },
-  } satisfies CellStyle,
+  } as const satisfies CellStyle,
 } as const;

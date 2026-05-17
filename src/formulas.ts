@@ -1,16 +1,7 @@
 import type { FormulaValue } from "./types.js";
+import { colLetter } from "./utils.js";
 
 type Ref = string | number;
-
-function colLetter(n: number): string {
-  let r = "";
-  while (n > 0) {
-    const rem = (n - 1) % 26;
-    r = String.fromCharCode(65 + rem) + r;
-    n = Math.floor((n - 1) / 26);
-  }
-  return r;
-}
 
 function resolveCol(col: Ref): string {
   return typeof col === "number" ? colLetter(col) : col;
@@ -83,10 +74,12 @@ export function pct(
 
 export function ifExpr(
   condition: string,
-  ifTrue: string | number,
-  ifFalse: string | number,
+  ifTrue: string | number | FormulaValue,
+  ifFalse: string | number | FormulaValue,
 ): FormulaValue {
-  return { formula: `IF(${condition},${esc(ifTrue)},${esc(ifFalse)})` };
+  const thenVal = typeof ifTrue === "object" && "formula" in ifTrue ? ifTrue.formula : esc(ifTrue);
+  const elseVal = typeof ifFalse === "object" && "formula" in ifFalse ? ifFalse.formula : esc(ifFalse);
+  return { formula: `IF(${condition},${thenVal},${elseVal})` };
 }
 
 export const F = {
