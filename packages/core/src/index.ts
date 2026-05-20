@@ -118,3 +118,16 @@ export type {
 // ── Constants ────────────────────────────────────────────────────────────────
 
 export { BUILTIN_FORMATS } from "./types.js";
+
+// ── Data Validation & Conditional Formatting (re-exported from excelts) ──────
+
+export type {
+  CellIsOperators,
+  ConditionalFormattingOptions,
+  ConditionalFormattingRule,
+  ContainsTextOperators,
+  DataValidation,
+  DataValidationOperator,
+  IconSetTypes,
+  TimePeriodTypes,
+} from "@cj-tech-master/excelts";

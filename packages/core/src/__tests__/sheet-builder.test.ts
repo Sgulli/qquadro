@@ -66,6 +66,10 @@ function createMockWorksheet() {
     headerFooter: { oddHeader: "", oddFooter: "", evenHeader: "", evenFooter: "" },
     autoFilter: undefined as string | undefined,
     columns: undefined,
+    dataValidations: { add: vi.fn(), find: vi.fn(), remove: vi.fn() },
+    addConditionalFormatting: vi.fn(),
+    removeConditionalFormatting: vi.fn(),
+    conditionalFormattings: [],
   };
 }
 
@@ -342,6 +346,177 @@ describe("SheetBuilder", () => {
         pageSetup: { margins: { left: 1.0, right: 1.0 } },
       });
       expect(ws.pageSetup.margins.left).toBe(1.0);
+    });
+  });
+
+  describe("data validation", () => {
+    it("addDataValidation delegates to ws.dataValidations.add", () => {
+      const { ws, sheet } = makeSheet({ name: "Test" });
+      sheet.addDataValidation("A1", { type: "any" });
+      expect(ws.dataValidations.add).toHaveBeenCalledWith("A1", { type: "any" });
+    });
+
+    it("addListValidation creates list type validation", () => {
+      const { ws, sheet } = makeSheet({ name: "Test" });
+      sheet.addListValidation("B2:B10", ["Option A", "Option B"]);
+      expect(ws.dataValidations.add).toHaveBeenCalledWith("B2:B10", {
+        type: "list",
+        formulae: ['"Option A"', '"Option B"'],
+      });
+    });
+
+    it("addListValidation forwards options", () => {
+      const { ws, sheet } = makeSheet({ name: "Test" });
+      sheet.addListValidation("C1", ["X"], { allowBlank: true, prompt: "Pick one" });
+      expect(ws.dataValidations.add).toHaveBeenCalledWith("C1", {
+        type: "list",
+        formulae: ['"X"'],
+        allowBlank: true,
+        prompt: "Pick one",
+      });
+    });
+
+    it("addRangeValidation with between operator", () => {
+      const { ws, sheet } = makeSheet({ name: "Test" });
+      sheet.addRangeValidation("D1:D10", "whole", "between", [1, 100]);
+      expect(ws.dataValidations.add).toHaveBeenCalledWith("D1:D10", {
+        type: "whole",
+        operator: "between",
+        formulae: [1, 100],
+      });
+    });
+
+    it("addRangeValidation forwards options", () => {
+      const { ws, sheet } = makeSheet({ name: "Test" });
+      sheet.addRangeValidation("E1", "decimal", "lessThan", [50], { error: "Too high" });
+      expect(ws.dataValidations.add).toHaveBeenCalledWith("E1", {
+        type: "decimal",
+        operator: "lessThan",
+        formulae: [50],
+        error: "Too high",
+      });
+    });
+  });
+
+  describe("conditional formatting", () => {
+    it("addConditionalFormatting delegates to ws.addConditionalFormatting", () => {
+      const { ws, sheet } = makeSheet({ name: "Test" });
+      sheet.addConditionalFormatting({
+        ref: "A1:A10",
+        rules: [{ type: "cellIs", operator: "greaterThan", formulae: [100] }],
+      });
+      expect(ws.addConditionalFormatting).toHaveBeenCalledWith({
+        ref: "A1:A10",
+        rules: [{ type: "cellIs", operator: "greaterThan", formulae: [100] }],
+      });
+    });
+
+    it("removeConditionalFormatting delegates to ws", () => {
+      const { ws, sheet } = makeSheet({ name: "Test" });
+      sheet.removeConditionalFormatting(0);
+      expect(ws.removeConditionalFormatting).toHaveBeenCalledWith(0);
+    });
+
+    it("addCellIsRule adds a cellIs rule", () => {
+      const { ws, sheet } = makeSheet({ name: "Test" });
+      sheet.addCellIsRule("A1:A10", "between", [10, 100]);
+      expect(ws.addConditionalFormatting).toHaveBeenCalledWith({
+        ref: "A1:A10",
+        rules: [{ type: "cellIs", operator: "between", formulae: [10, 100] }],
+      });
+    });
+
+    it("addCellIsRule with style", () => {
+      const { ws, sheet } = makeSheet({ name: "Test" });
+      sheet.addCellIsRule("A1", "equal", ["Yes"], { font: { bold: true } });
+      expect(ws.addConditionalFormatting).toHaveBeenCalledWith({
+        ref: "A1",
+        rules: [
+          { type: "cellIs", operator: "equal", formulae: ["Yes"], style: { font: { bold: true } } },
+        ],
+      });
+    });
+
+    it("addExpressionRule adds an expression rule", () => {
+      const { ws, sheet } = makeSheet({ name: "Test" });
+      sheet.addExpressionRule("A1:A10", "A1>100");
+      expect(ws.addConditionalFormatting).toHaveBeenCalledWith({
+        ref: "A1:A10",
+        rules: [{ type: "expression", formulae: ["A1>100"] }],
+      });
+    });
+
+    it("addDataBar adds a data bar rule", () => {
+      const { ws, sheet } = makeSheet({ name: "Test" });
+      sheet.addDataBar("B1:B10");
+      expect(ws.addConditionalFormatting).toHaveBeenCalledWith({
+        ref: "B1:B10",
+        rules: [{ type: "dataBar" }],
+      });
+    });
+
+    it("addColorScale adds a color scale rule", () => {
+      const { ws, sheet } = makeSheet({ name: "Test" });
+      sheet.addColorScale("C1:C10", [{ type: "min" }, { type: "max" }]);
+      expect(ws.addConditionalFormatting).toHaveBeenCalledWith({
+        ref: "C1:C10",
+        rules: [{ type: "colorScale", cfvo: [{ type: "min" }, { type: "max" }] }],
+      });
+    });
+
+    it("addIconSet adds an icon set rule", () => {
+      const { ws, sheet } = makeSheet({ name: "Test" });
+      sheet.addIconSet("D1:D10", "3TrafficLights1");
+      expect(ws.addConditionalFormatting).toHaveBeenCalledWith({
+        ref: "D1:D10",
+        rules: [{ type: "iconSet", iconSet: "3TrafficLights1" }],
+      });
+    });
+
+    it("addTop10Rule adds a top10 rule", () => {
+      const { ws, sheet } = makeSheet({ name: "Test" });
+      sheet.addTop10Rule("E1:E10", 5);
+      expect(ws.addConditionalFormatting).toHaveBeenCalledWith({
+        ref: "E1:E10",
+        rules: [{ type: "top10", rank: 5, percent: false }],
+      });
+    });
+
+    it("addAboveAverageRule adds an aboveAverage rule", () => {
+      const { ws, sheet } = makeSheet({ name: "Test" });
+      sheet.addAboveAverageRule("F1:F10");
+      expect(ws.addConditionalFormatting).toHaveBeenCalledWith({
+        ref: "F1:F10",
+        rules: [{ type: "aboveAverage" }],
+      });
+    });
+
+    it("addContainsTextRule adds a containsText rule", () => {
+      const { ws, sheet } = makeSheet({ name: "Test" });
+      sheet.addContainsTextRule("G1:G10", "urgent");
+      expect(ws.addConditionalFormatting).toHaveBeenCalledWith({
+        ref: "G1:G10",
+        rules: [{ type: "containsText", text: "urgent" }],
+      });
+    });
+
+    it("addTimePeriodRule adds a timePeriod rule", () => {
+      const { ws, sheet } = makeSheet({ name: "Test" });
+      sheet.addTimePeriodRule("H1:H10", "thisMonth");
+      expect(ws.addConditionalFormatting).toHaveBeenCalledWith({
+        ref: "H1:H10",
+        rules: [{ type: "timePeriod", timePeriod: "thisMonth" }],
+      });
+    });
+
+    it("methods are chainable", () => {
+      const { ws, sheet } = makeSheet({ name: "Test" });
+      sheet
+        .addDataValidation("A1", { type: "any" })
+        .addConditionalFormatting({ ref: "B1", rules: [{ type: "dataBar" }] })
+        .addCellIsRule("C1", "greaterThan", [0]);
+      expect(ws.dataValidations.add).toHaveBeenCalledTimes(1);
+      expect(ws.addConditionalFormatting).toHaveBeenCalledTimes(2);
     });
   });
 });

@@ -1,12 +1,30 @@
 import type {
+  AboveAverageRuleType,
   AddAOAOptions,
   AddJSONOptions,
   CellFormulaValue,
+  CellIsOperators,
+  CellIsRuleType,
+  ColorScaleRuleType,
+  ConditionalFormattingOptions,
+  ConditionalFormattingRule,
+  ContainsTextOperators,
+  ContainsTextRuleType,
+  DataBarRuleType,
+  DataValidation,
+  DataValidationOperator,
   Cell as ExcelCell,
   CellValue as ExcelCellValue,
   Row as ExcelRow,
+  Style as ExcelStyle,
   Worksheet as ExcelWorksheet,
+  ExpressionRuleType,
+  IconSetRuleType,
+  IconSetTypes,
   SheetToJSONOptions,
+  TimePeriodRuleType,
+  TimePeriodTypes,
+  Top10RuleType,
   WorksheetView,
 } from "@cj-tech-master/excelts";
 import type {
@@ -159,6 +177,188 @@ export class SheetBuilder {
   autoFilter(range?: string): this {
     const r = range ?? (this._columns.length ? `A1:${colLetter(this._columns.length)}1` : "A1");
     this._ws.autoFilter = r;
+    return this;
+  }
+
+  // ── Data Validation ─────────────────────────────────────────────────────────
+
+  addDataValidation(address: string, validation: DataValidation): this {
+    this._ws.dataValidations.add(address, validation);
+    return this;
+  }
+
+  addListValidation(
+    address: string,
+    list: (string | number | Date)[],
+    options?: {
+      allowBlank?: boolean;
+      error?: string;
+      errorTitle?: string;
+      prompt?: string;
+      promptTitle?: string;
+      showErrorMessage?: boolean;
+      showInputMessage?: boolean;
+    },
+  ): this {
+    this._ws.dataValidations.add(address, {
+      type: "list",
+      formulae: list.map((v) => (typeof v === "string" ? `"${v}"` : String(v))),
+      ...options,
+    });
+    return this;
+  }
+
+  addRangeValidation(
+    address: string,
+    type: "whole" | "decimal" | "date" | "textLength",
+    operator: DataValidationOperator,
+    formulae: (string | number | Date)[],
+    options?: {
+      allowBlank?: boolean;
+      error?: string;
+      errorTitle?: string;
+      prompt?: string;
+      promptTitle?: string;
+      showErrorMessage?: boolean;
+      showInputMessage?: boolean;
+    },
+  ): this {
+    this._ws.dataValidations.add(address, {
+      type,
+      operator,
+      formulae,
+      ...options,
+    });
+    return this;
+  }
+
+  // ── Conditional Formatting ─────────────────────────────────────────────────
+
+  addConditionalFormatting(cf: ConditionalFormattingOptions): this {
+    this._ws.addConditionalFormatting(cf);
+    return this;
+  }
+
+  removeConditionalFormatting(
+    filter?:
+      | number
+      | ((
+          value: ConditionalFormattingOptions,
+          index: number,
+          array: ConditionalFormattingOptions[],
+        ) => boolean),
+  ): this {
+    this._ws.removeConditionalFormatting(filter);
+    return this;
+  }
+
+  addCellIsRule(
+    ref: string,
+    operator: CellIsOperators,
+    formulae: (string | number)[],
+    style?: Partial<ExcelStyle>,
+  ): this {
+    const rule: CellIsRuleType = { type: "cellIs", operator, formulae };
+    if (style) rule.style = style;
+    this._ws.addConditionalFormatting({ ref, rules: [rule] });
+    return this;
+  }
+
+  addExpressionRule(ref: string, formula: string, style?: Partial<ExcelStyle>): this {
+    const rule: ExpressionRuleType = { type: "expression", formulae: [formula] };
+    if (style) rule.style = style;
+    this._ws.addConditionalFormatting({ ref, rules: [rule] });
+    return this;
+  }
+
+  addDataBar(ref: string, color?: { argb?: string; theme?: number }): this {
+    const rule: DataBarRuleType = { type: "dataBar" };
+    if (color) rule.color = color;
+    this._ws.addConditionalFormatting({ ref, rules: [rule] });
+    return this;
+  }
+
+  addColorScale(
+    ref: string,
+    cfvo: {
+      type: "min" | "max" | "num" | "percent" | "percentile" | "formula";
+      value?: number | string;
+    }[],
+    colors?: { argb?: string; theme?: number }[],
+  ): this {
+    const rule: ColorScaleRuleType = { type: "colorScale", cfvo, color: colors };
+    this._ws.addConditionalFormatting({ ref, rules: [rule] });
+    return this;
+  }
+
+  addIconSet(
+    ref: string,
+    iconSet?: IconSetTypes,
+    cfvo?: { type: "percent" | "num" | "percentile" | "formula"; value?: number | string }[],
+    options?: { showValue?: boolean; reverse?: boolean },
+  ): this {
+    const rule: IconSetRuleType = {
+      type: "iconSet",
+      iconSet,
+      cfvo,
+      ...options,
+    };
+    this._ws.addConditionalFormatting({ ref, rules: [rule] });
+    return this;
+  }
+
+  addTop10Rule(
+    ref: string,
+    rank: number,
+    options?: { percent?: boolean; bottom?: boolean; style?: Partial<ExcelStyle> },
+  ): this {
+    const rule: Top10RuleType = {
+      type: "top10",
+      rank,
+      percent: options?.percent ?? false,
+      bottom: options?.bottom,
+    };
+    if (options?.style) rule.style = options.style;
+    this._ws.addConditionalFormatting({ ref, rules: [rule] });
+    return this;
+  }
+
+  addAboveAverageRule(
+    ref: string,
+    options?: { aboveAverage?: boolean; style?: Partial<ExcelStyle> },
+  ): this {
+    const rule: AboveAverageRuleType = {
+      type: "aboveAverage",
+      aboveAverage: options?.aboveAverage,
+    };
+    if (options?.style) rule.style = options.style;
+    this._ws.addConditionalFormatting({ ref, rules: [rule] });
+    return this;
+  }
+
+  addContainsTextRule(
+    ref: string,
+    text: string,
+    operator?: ContainsTextOperators,
+    style?: Partial<ExcelStyle>,
+  ): this {
+    const rule: ContainsTextRuleType = {
+      type: "containsText",
+      operator,
+      text,
+    };
+    if (style) rule.style = style;
+    this._ws.addConditionalFormatting({ ref, rules: [rule] });
+    return this;
+  }
+
+  addTimePeriodRule(ref: string, timePeriod: TimePeriodTypes, style?: Partial<ExcelStyle>): this {
+    const rule: TimePeriodRuleType = {
+      type: "timePeriod",
+      timePeriod,
+    };
+    if (style) rule.style = style;
+    this._ws.addConditionalFormatting({ ref, rules: [rule] });
     return this;
   }
 

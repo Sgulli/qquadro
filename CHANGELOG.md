@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.0 (unreleased)
+
+- Data validation: `sheet.addDataValidation()`, `sheet.addListValidation()`, `sheet.addRangeValidation()`
+- Conditional formatting: `sheet.addConditionalFormatting()`, `sheet.addCellIsRule()`, `sheet.addExpressionRule()`
+- Conditional formatting: `sheet.addDataBar()`, `sheet.addColorScale()`, `sheet.addIconSet()`
+- Conditional formatting: `sheet.addTop10Rule()`, `sheet.addAboveAverageRule()`, `sheet.addContainsTextRule()`, `sheet.addTimePeriodRule()`
+- Exported `DataValidation`, `ConditionalFormattingOptions`, and related types from `@quadro/core`
+
 ## 0.2.0 (unreleased)
 
 - Workbook reading: `WorkbookBuilder.load()`, `WorkbookBuilder.fromFile()`
