@@ -5,7 +5,7 @@
   "author": {
     "name": "sgulli"
   },
-  "version": "0.2",
+  "version": "0.3",
   "scripts": {
     "build": "turbo run build",
     "typecheck": "turbo run typecheck",

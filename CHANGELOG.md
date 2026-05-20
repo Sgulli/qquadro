@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.3.0 (unreleased)
+## 0.3.0 (2026-05-20)
 
 - Data validation: `sheet.addDataValidation()`, `sheet.addListValidation()`, `sheet.addRangeValidation()`
 - Conditional formatting: `sheet.addConditionalFormatting()`, `sheet.addCellIsRule()`, `sheet.addExpressionRule()`
@@ -24,6 +24,9 @@
 - Rewrote assignments example using pure numeric coordinates (no A1 strings)
 - Fixed pre-existing merge crash in assignments (off-by-one `FIXED_COLS`)
 - Fixed pre-existing TypeScript errors in seat filter type guards
+- `sheet.columnIndex()` resolves column key to 1‑based index for RC API
+- `sheet.removeDataValidation()` to remove validation rules
+- Updated `@quadro/core` README with RC API docs, package managers, author attribution
 
 ## 0.2.0 (unreleased)
 
