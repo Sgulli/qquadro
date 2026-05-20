@@ -146,7 +146,7 @@ describe("SheetBuilder", () => {
       });
       const cell = ws.getCell("A1");
       expect(cell.value).toBe("Title");
-      expect((cell.font as Record<string, unknown>)?.bold).toBe(true);
+      expect(cell.font?.bold).toBe(true);
     });
   });
 
@@ -187,16 +187,16 @@ describe("SheetBuilder", () => {
     it("sets frozen view state", () => {
       const { ws, sheet } = makeSheet({ name: "Test" });
       sheet.freeze(1, 0);
-      const views = ws.views as unknown as Array<Record<string, unknown>>;
-      expect(views[0].state).toBe("frozen");
-      expect(views[0].ySplit).toBe(1);
+      const view = ws.views[0];
+      if (view.state !== "frozen") throw new Error("expected frozen view");
+      expect(view.ySplit).toBe(1);
     });
 
     it("preserves existing view properties", () => {
       const { ws, sheet } = makeSheet({ name: "Test" });
-      ws.views = [{ showGridLines: false, zoomScale: 80 }] as never;
+      ws.views = [{ showGridLines: false, zoomScale: 80 }];
       sheet.freeze(2);
-      const views = ws.views as unknown as Array<Record<string, unknown>>;
+      const views = ws.views;
       expect(views[0].showGridLines).toBe(false);
       expect(views[0].zoomScale).toBe(80);
       expect(views[0].state).toBe("frozen");
@@ -253,13 +253,13 @@ describe("SheetBuilder", () => {
 
     it("applies zoom", () => {
       const { ws } = makeSheet({ name: "Test", zoom: 120 });
-      const views = ws.views as unknown as Array<Record<string, unknown>>;
+      const views = ws.views;
       expect(views[0].zoomScale).toBe(120);
     });
 
     it("hides gridlines", () => {
       const { ws } = makeSheet({ name: "Test", showGridLines: false });
-      const views = ws.views as unknown as Array<Record<string, unknown>>;
+      const views = ws.views;
       expect(views[0].showGridLines).toBe(false);
     });
 
@@ -268,9 +268,9 @@ describe("SheetBuilder", () => {
         name: "Test",
         freeze: { row: 2, col: 1 },
       });
-      const views = ws.views as unknown as Array<Record<string, unknown>>;
-      expect(views[0].state).toBe("frozen");
-      expect(views[0].ySplit).toBe(2);
+      const view = ws.views[0];
+      if (view.state !== "frozen") throw new Error("expected frozen view");
+      expect(view.ySplit).toBe(2);
     });
 
     it("applies header/footer", () => {

@@ -63,27 +63,21 @@ export async function handler(options: AssignmentsOptions = {}): Promise<WriteRe
     if (!club) continue;
     const fullClub = clubsById.get(clubId);
     const clubImaSeats =
-      (
-        fullClub?.seats as Array<{
-          originalClubId: string;
-          sectorId?: string;
-          sector?: { macroAreaId: string };
-        }>
-      ).filter((s) => {
+      fullClub?.seats.filter((s) => {
         if (s.originalClubId !== clubId) return false;
-        if (sectorId) return s.sectorId === sectorId;
-        return s.sector?.macroAreaId === macroAreaId;
+        if (sectorId) return "sectorId" in s && s.sectorId === sectorId;
+        return "sector" in s && s.sector?.macroAreaId === macroAreaId;
       }) ?? [];
     club.totalRequests += Math.max(0, quantity - clubImaSeats.length);
   }
 
-  const orderedColumns: Array<{
+  const orderedColumns: {
     macroareaName: string;
     macroareaId: string;
     sectorName: string | null;
     sectorId: string | null;
     hasSectors: boolean;
-  }> = [];
+  }[] = [];
   for (const ma of macroareasWithSectors) {
     if (ma.sectors.length > 0) {
       for (const sector of ma.sectors) {
@@ -123,7 +117,12 @@ export async function handler(options: AssignmentsOptions = {}): Promise<WriteRe
     .addSheet(
       {
         name: "Riepilogo Assegnazioni",
-        pageSetup: { paperSize: 9, orientation: "landscape", fitToPage: true, fitToWidth: 1 },
+        pageSetup: {
+          paperSize: 9,
+          orientation: "landscape",
+          fitToPage: true,
+          fitToWidth: 1,
+        },
       },
       (sheet) => {
         sheet.setCell("A1", F.sum(colRange(0, DATA_ROW_START + 1, dataRowEnd + 1)), darkHeader);
@@ -153,7 +152,11 @@ export async function handler(options: AssignmentsOptions = {}): Promise<WriteRe
             currentCol += ma.sectors.length;
           } else {
             sheet.setCell(`${cl1}1`, ma.name, darkHeader);
-            sheet.merge({ range: `${cl1}1:${cl1}2`, value: ma.name, style: darkHeader });
+            sheet.merge({
+              range: `${cl1}1:${cl1}2`,
+              value: ma.name,
+              style: darkHeader,
+            });
             currentCol++;
           }
         }
