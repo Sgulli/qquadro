@@ -22,6 +22,8 @@ import type {
   IconSetRuleType,
   IconSetTypes,
   SheetToJSONOptions,
+  TableColumnProperties,
+  TableStyleProperties,
   TimePeriodRuleType,
   TimePeriodTypes,
   Top10RuleType,
@@ -589,6 +591,49 @@ export class SheetBuilder {
     style?: Partial<ExcelStyle>,
   ): this {
     return this.addTimePeriodRule(rangeRef(col1, row1, col2, row2), timePeriod, style);
+  }
+
+  // ── Tables ──────────────────────────────────────────────────────────────────
+
+  addTable(
+    name: string,
+    ref: string,
+    columns: TableColumnProperties[],
+    options?: {
+      rows?: Array<Array<ExcelCellValue>>;
+      headerRow?: boolean;
+      totalsRow?: boolean;
+      style?: TableStyleProperties;
+    },
+  ): this {
+    this._ws.addTable({
+      name,
+      ref,
+      columns,
+      rows: options?.rows ?? [],
+      headerRow: options?.headerRow ?? true,
+      totalsRow: options?.totalsRow,
+      style: options?.style,
+    });
+    return this;
+  }
+
+  addTableRC(
+    name: string,
+    col1: number,
+    row1: number,
+    col2: number,
+    row2: number,
+    columns: TableColumnProperties[],
+    options?: {
+      rows?: Array<Array<ExcelCellValue>>;
+      headerRow?: boolean;
+      totalsRow?: boolean;
+      style?: TableStyleProperties;
+    },
+  ): this {
+    const ref = rangeRef(col1, row1, col2, row2);
+    return this.addTable(name, ref, columns, options);
   }
 
   // ── Reading / Export ───────────────────────────────────────────────────────

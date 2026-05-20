@@ -131,5 +131,7 @@ export type {
   DataValidationOperator,
   DefinedNameModel,
   IconSetTypes,
+  TableColumnProperties,
+  TableStyleProperties,
   TimePeriodTypes,
 } from "@cj-tech-master/excelts";

@@ -566,4 +566,57 @@ describe("SheetBuilder", () => {
       });
     });
   });
+
+  describe("tables", () => {
+    it("addTable delegates to ws.addTable", () => {
+      const { ws, sheet } = makeSheet({ name: "Test" });
+      vi.spyOn(ws, "addTable");
+      sheet.addTable("MyTable", "A1:C10", [{ name: "Name" }, { name: "Score" }]);
+      expect(ws.addTable).toHaveBeenCalled();
+      const args = vi.mocked(ws.addTable).mock.calls[0][0];
+      expect(args).toMatchObject({
+        name: "MyTable",
+        ref: "A1:C10",
+        headerRow: true,
+      });
+    });
+
+    it("addTable with rows and options", () => {
+      const { ws, sheet } = makeSheet({ name: "Test" });
+      vi.spyOn(ws, "addTable");
+      sheet.addTable("Sales", "A1:D5", [{ name: "Product" }, { name: "Revenue" }], {
+        rows: [
+          ["Widget", 100],
+          ["Gadget", 200],
+        ],
+        totalsRow: true,
+        style: { theme: "TableStyleMedium9", showRowStripes: true },
+      });
+      expect(ws.addTable).toHaveBeenCalled();
+      const args = vi.mocked(ws.addTable).mock.calls[0][0];
+      expect(args).toMatchObject({
+        name: "Sales",
+        ref: "A1:D5",
+        totalsRow: true,
+        style: { theme: "TableStyleMedium9", showRowStripes: true },
+      });
+    });
+
+    it("addTableRC delegates with rangeRef", () => {
+      const { ws, sheet } = makeSheet({ name: "Test" });
+      vi.spyOn(ws, "addTable");
+      sheet.addTableRC("Data", 1, 1, 3, 10, [{ name: "A" }, { name: "B" }, { name: "C" }]);
+      expect(ws.addTable).toHaveBeenCalled();
+      const args = vi.mocked(ws.addTable).mock.calls[0][0];
+      expect(args).toMatchObject({ name: "Data", ref: "A1:C10" });
+    });
+
+    it("methods are chainable", () => {
+      const { sheet } = makeSheet({ name: "Test" });
+      const result = sheet
+        .addTable("T1", "A1:B2", [{ name: "X" }])
+        .addTable("T2", "D1:E2", [{ name: "Y" }]);
+      expect(result).toBe(sheet);
+    });
+  });
 });
