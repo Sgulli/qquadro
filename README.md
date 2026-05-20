@@ -1,6 +1,6 @@
 # quadro
 
-Fluent, fully-typed Excel builder for Node.js. Built on [ExcelTS](https://github.com/cjnoname/excelts).
+Fluent, fully-typed Excel workbook builder for Node.js. Built on [excelts](https://github.com/cj-tech-master/excelts) by [@cj-tech-master](https://github.com/cj-tech-master). Created by [@sgulli](https://github.com/Sgulli).
 
 ```ts
 import { WorkbookBuilder, Styles, F } from "@quadro/core";
@@ -8,15 +8,13 @@ import { WorkbookBuilder, Styles, F } from "@quadro/core";
 await new WorkbookBuilder({ author: "Acme Corp" })
   .addSheet({ name: "Sales" }, (sheet) => {
     sheet
-      .columns([
+      .headers([
         { key: "product", header: "Product", width: 22, headerStyle: Styles.header },
         { key: "revenue", header: "Revenue ($)", width: 18, style: Styles.currency },
-        { key: "growth", header: "Growth", width: 14, style: Styles.percent },
       ])
-      .writeHeaders()
       .addRows([
-        { product: "Widget A", revenue: 36_000, growth: F.pct("B3", "B2") },
-        { product: "Widget B", revenue: 25_500, growth: F.pct("B4", "B3") },
+        { product: "Widget A", revenue: 120_000 },
+        { product: "Widget B", revenue: 98_500 },
       ])
       .addRow(
         { product: "Total", revenue: F.sum("B2:B3") },
@@ -31,19 +29,27 @@ await new WorkbookBuilder({ author: "Acme Corp" })
 
 ```sh
 npm install @quadro/core
+pnpm add @quadro/core
+yarn add @quadro/core
+bun add @quadro/core
 ```
 
 Requires Node 18+.
 
 ## Features
 
-- **Fluent API** — chain `.columns()`, `.addRow()`, `.merge()`, `.freeze()`, etc.
+- **Fluent API** — chainable `.headers()`, `.addRow()`, `.merge()`, `.freeze()`, etc.
+- **Numeric RC API** — reference cells by `(col, row)` numbers, no A1 strings
+- **Data validation** — dropdown lists, number/date ranges, custom formulas
+- **Conditional formatting** — cell rules, data bars, color scales, icon sets, top N
+- **Named ranges** — workbook-level defined names with RC support
+- **Tables** — structured references, totals row, banded rows, table styles
 - **Workbook reading** — load, modify, re-save existing XLSX files
 - **CSV import/export** — read/write CSV to files or strings
 - **Sheet-to-JSON** — convert worksheet data to objects or arrays
 - **Formulas** — typed helpers (`F.sum()`, `F.pct()`, `F.add()`, etc.) or raw `{ formula: "..." }`
-- **Styles** — presets (`Styles.header`, `Styles.currency`, `Styles.totalRow`) or custom
-- **Merged cells** — `.merge()` with value & style in one call
+- **Styles** — presets (`Styles.header`, `Styles.currency`, `Styles.totalRow`) or composable custom
+- **Merged cells** — `.merge()` with value, style & height in one call
 - **Freeze panes** + **auto-filter**
 - **Streaming** — constant memory for large files via `useStreaming` option
 - **ESM + CJS** — dual package with exports map
@@ -54,58 +60,116 @@ Requires Node 18+.
 ### Creating Workbooks
 
 ```ts
-const wb = new WorkbookBuilder({ author: "Acme Corp", useSharedStrings: true });
+const wb = new WorkbookBuilder({ author: "Acme Corp" });
 
-wb.addSheet({ name: "Sales", freeze: { row: 3 } }, (sheet) => {
-  sheet.merge({ range: "A1:F1", value: "Report", style: Styles.header });
-  sheet.columns([
-    { key: "region", header: "Region", width: 18, headerStyle: Styles.header },
-    { key: "q1", header: "Q1", width: 14, style: Styles.currency },
-    { key: "q2", header: "Q2", width: 14, style: Styles.currency },
-    { key: "total", header: "Total", width: 16, style: { ...Styles.currency, font: { bold: true } } },
-  ]).writeHeaders();
-
-  const data = [
-    { region: "EMEA", q1: 120_000, q2: 135_000 },
-    { region: "APAC", q1: 98_000, q2: 104_000 },
-  ];
-  data.forEach((row, i) => {
-    const r = i + 3;
-    sheet.addRow({ ...row, total: F.add(F.ref("C", r), F.ref("D", r)) });
-  });
-  sheet.addRow(
-    { region: "Total", q1: F.sum(F.range("C", 3, data.length + 2)), q2: F.sum(F.range("D", 3, data.length + 2)) },
-    { style: Styles.totalRow },
-  );
-  sheet.autoFilter("A2:D2");
+wb.addSheet({ name: "Sales", freeze: { row: 2 } }, (sheet) => {
+  sheet
+    .headers([
+      { key: "region", header: "Region", width: 18, headerStyle: Styles.header },
+      { key: "q1", header: "Q1", width: 14, style: Styles.currency },
+      { key: "q2", header: "Q2", width: 14, style: Styles.currency },
+    ])
+    .addRows([
+      { region: "EMEA", q1: 120_000, q2: 135_000 },
+      { region: "APAC", q1: 98_000, q2: 104_000 },
+    ])
+    .addRow(
+      { region: "Total", q1: F.sum("B2:B3"), q2: F.sum("C2:C3") },
+      { style: Styles.totalRow },
+    )
+    .autoFilter("A1:C1");
 });
 
 const { filePath, sizeBytes } = await wb.write("./output/report.xlsx");
 ```
 
+### Numeric RC API — No A1 strings
+
+Use `for` loops with column/row numbers:
+
+```ts
+const COL = { name: 1, score: 2, status: 3 };
+const dataStart = 2;
+
+sheet
+  .headers([
+    { key: "name", header: "Name" },
+    { key: "score", header: "Score" },
+    { key: "status", header: "Status" },
+  ])
+  .addRows([
+    { name: "Alice", score: 85, status: "Pass" },
+    { name: "Bob", score: 42, status: "Fail" },
+  ]);
+
+const dr = { start: dataStart, end: dataStart + sheet.rowCount - 1 };
+sheet
+  .addDataBarRC(COL.score, dr.start, COL.score, dr.end, { argb: "FF5B9BD5" })
+  .addCellIsRuleRC(COL.score, dr.start, COL.score, dr.end, "greaterThanOrEqual", [70], {
+    font: { bold: true, color: { argb: "FF006100" } },
+  });
+```
+
+### Named Ranges
+
+```ts
+wb.defineName("MyRange", "A1:B10", "Sheet1");
+wb.defineNameRC("Data", 1, 1, 5, 10, "Sheet1");
+wb.defineFormula("Double", "LAMBDA(x,x*2)");
+wb.getDefinedNames(); // → DefinedNameModel[]
+```
+
+### Tables
+
+```ts
+sheet.addTable("SalesTable", "A1:D20", [
+  { name: "Product" },
+  { name: "Revenue", totalsRowFunction: "sum" },
+  { name: "Region" },
+], {
+  totalsRow: true,
+  style: { theme: "TableStyleMedium9", showRowStripes: true },
+});
+```
+
+### Data Validation
+
+```ts
+sheet
+  .addListValidation(sheet.columnRange("product"), ["Widget A", "Widget B"])
+  .addRangeValidation(sheet.columnRange("quantity"), "whole", "between", [1, 1000], {
+    error: "Must be between 1 and 1000",
+  });
+```
+
+### Conditional Formatting
+
+```ts
+sheet
+  .addCellIsRule(sheet.columnRange("score"), "greaterThanOrEqual", [70], {
+    font: { color: { argb: "FF006100" } },
+    fill: { type: "solid", color: { argb: "FFC6EFCE" } },
+  })
+  .addDataBar(sheet.columnRange("score"), { argb: "FF5B9BD5" })
+  .addIconSet(sheet.columnRange("score"), "3TrafficLights1");
+```
+
 ### Reading Workbooks
 
 ```ts
-import { WorkbookBuilder } from "@quadro/core";
-
 const wb = await WorkbookBuilder.load("./input.xlsx");
 
-// Read data as objects (first row = headers)
 const data = wb.sheets[0].toJSON();
 // => [{ Name: "Alice", Age: 30 }, { Name: "Bob", Age: 25 }]
 
-// Read as array of arrays
 const rows = wb.sheets[0].toJSON({ header: 1 });
 // => [["Name", "Age"], ["Alice", 30], ["Bob", 25]]
 
-// Read as array of arrays with toAOA
 const aoa = wb.sheets[0].toAOA();
 // => [["Name", "Age"], ["Alice", 30], ["Bob", 25]]
 ```
 
 ### Template Workflow
-
-Load an existing file, modify it, and save a new version:
 
 ```ts
 const wb = await WorkbookBuilder.load("./template.xlsx");
@@ -116,10 +180,6 @@ await wb.write("./output.xlsx");
 ### CSV Import/Export
 
 ```ts
-// Write CSV
-const csvString = await wb.toCsv();
-await wb.toCsv("./output.csv");
-
 // Write CSV
 const csvString = await wb.toCsv();
 await wb.toCsv("./output.csv");
@@ -157,9 +217,6 @@ wb.sheets[0].addAOA([
 
 | Helper | Output | Example |
 |--------|--------|---------|
-| `F.ref(col, row)` | `"C3"` | cell reference |
-| `F.range(col, from, to)` | `"C3:C8"` | column range |
-| `F.rect(col1, row1, col2, row2)` | `"A1:D10"` | rectangular range |
 | `F.sum(range)` | `SUM(C3:C8)` | aggregate |
 | `F.average(range)` | `AVERAGE(C3:C8)` | |
 | `F.count(range)` | `COUNT(C3:C8)` | |
@@ -192,8 +249,6 @@ Raw formulas also work: `{ formula: "SUM(C3:C8)", result: 217000 }`.
 | `Styles.linkCell` | Green font — cross-sheet link convention |
 
 ### Composable styles
-
-Build styles from partials with `style()` — deep-merges font, fill, border, alignment, and numberFormat so you can mix reusable pieces.
 
 ```ts
 import { style, font, fill, numFmt, border, align, currency } from "@quadro/core";
