@@ -16,7 +16,9 @@
     "format": "biome format .",
     "format:fix": "biome format --write .",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "cli": "node apps/cli/dist/index.js",
+    "example": "node apps/cli/dist/index.js example"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.15",

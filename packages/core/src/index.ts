@@ -12,12 +12,10 @@
  * await new WorkbookBuilder({ author: "Acme Corp" })
  *   .addSheet({ name: "Sales" }, (sheet) => {
  *     sheet
- *       .columns([
- *         { key: "product", header: "Product",    width: 22, headerStyle: Styles.header },
- *         { key: "units",   header: "Units Sold", width: 15, headerStyle: Styles.header },
+ *       .headers([
+ *         { key: "product", header: "Product",  width: 22, headerStyle: Styles.header },
  *         { key: "revenue", header: "Revenue",    width: 18, style: Styles.currency, headerStyle: Styles.header },
  *       ])
- *       .writeHeaders()
  *       .addRows([
  *         { product: "Widget A", units: 1_200, revenue: 36_000 },
  *         { product: "Widget B", units:   850, revenue: 25_500 },

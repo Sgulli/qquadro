@@ -44,6 +44,28 @@ export class SheetBuilder {
   private _columns: ColumnDef[] = [];
   private _headerWritten = false;
   private _protectionConfig?: { password?: string };
+  private _rowCount = 0;
+  private _columnsInferred = false;
+
+  /** Current number of data rows written (excludes header row). */
+  get rowCount(): number {
+    return this._rowCount;
+  }
+
+  /**
+   * Resolve a column key to a range string like `"B2:B5"`.
+   * Automatically accounts for header row when headers were written.
+   * @param key ColumnDef key
+   * @param startRow First data row (defaults to 1 if no headers, 2 after header row)
+   */
+  columnRange(key: string, startRow?: number): string {
+    if (startRow === undefined) startRow = this._headerWritten ? 2 : 1;
+    const col = this._columns.find((c) => c.key === key);
+    if (!col) throw new Error(`[SheetBuilder] No column with key "${key}".`);
+    const idx = this._columns.indexOf(col);
+    const letter = colLetter(idx + 1);
+    return `${letter}${startRow}:${letter}${startRow + this._rowCount - 1}`;
+  }
 
   /** @internal */
   constructor(
@@ -64,16 +86,19 @@ export class SheetBuilder {
     return this;
   }
 
-  writeHeaders(globalStyle?: CellStyle): this {
+  /** Set column definitions and write the header row in one call. */
+  headers(defs: ColumnDef[], globalStyle?: CellStyle, height?: number): this {
+    this._columns = defs;
+    this._writeHeaders(globalStyle, height);
+    return this;
+  }
+
+  private _writeHeaders(globalStyle?: CellStyle, height?: number): void {
     if (this._headerWritten) {
-      throw new Error(
-        `[SheetBuilder] writeHeaders() already called on sheet "${this._opts.name}".`,
-      );
+      throw new Error(`[SheetBuilder] headers() already called on sheet "${this._opts.name}".`);
     }
     if (this._columns.length === 0) {
-      throw new Error(
-        `[SheetBuilder] Call columns() before writeHeaders() on sheet "${this._opts.name}".`,
-      );
+      throw new Error(`[SheetBuilder] headers() requires at least one column definition.`);
     }
 
     const row = this._ws.addRow(this._columns.map((c) => c.header));
@@ -83,6 +108,7 @@ export class SheetBuilder {
       if (col?.headerStyle) applyStyle(cell, col.headerStyle);
     });
     row.commit();
+    if (height) row.height = height;
 
     this._headerWritten = true;
 
@@ -91,8 +117,6 @@ export class SheetBuilder {
       width: c.width ?? 15,
       hidden: c.hidden ?? false,
     }));
-
-    return this;
   }
 
   addRow(data: RowData, options?: RowOptions): this {
@@ -133,8 +157,9 @@ export class SheetBuilder {
     if (!tl) return this;
 
     const cell = this._ws.getCell(tl);
-    if (region.value !== undefined) this._writeValue(cell, region.value);
+    if (region.value) this._writeValue(cell, region.value);
     if (region.style) applyStyle(cell, region.style);
+    if (region.height) this._ws.getRow(cell.fullAddress.row).height = region.height;
 
     return this;
   }
@@ -265,7 +290,10 @@ export class SheetBuilder {
   }
 
   addExpressionRule(ref: string, formula: string, style?: Partial<ExcelStyle>): this {
-    const rule: ExpressionRuleType = { type: "expression", formulae: [formula] };
+    const rule: ExpressionRuleType = {
+      type: "expression",
+      formulae: [formula],
+    };
     if (style) rule.style = style;
     this._ws.addConditionalFormatting({ ref, rules: [rule] });
     return this;
@@ -286,7 +314,11 @@ export class SheetBuilder {
     }[],
     colors?: { argb?: string; theme?: number }[],
   ): this {
-    const rule: ColorScaleRuleType = { type: "colorScale", cfvo, color: colors };
+    const rule: ColorScaleRuleType = {
+      type: "colorScale",
+      cfvo,
+      color: colors,
+    };
     this._ws.addConditionalFormatting({ ref, rules: [rule] });
     return this;
   }
@@ -294,7 +326,10 @@ export class SheetBuilder {
   addIconSet(
     ref: string,
     iconSet?: IconSetTypes,
-    cfvo?: { type: "percent" | "num" | "percentile" | "formula"; value?: number | string }[],
+    cfvo?: {
+      type: "percent" | "num" | "percentile" | "formula";
+      value?: number | string;
+    }[],
     options?: { showValue?: boolean; reverse?: boolean },
   ): this {
     const rule: IconSetRuleType = {
@@ -310,7 +345,11 @@ export class SheetBuilder {
   addTop10Rule(
     ref: string,
     rank: number,
-    options?: { percent?: boolean; bottom?: boolean; style?: Partial<ExcelStyle> },
+    options?: {
+      percent?: boolean;
+      bottom?: boolean;
+      style?: Partial<ExcelStyle>;
+    },
   ): this {
     const rule: Top10RuleType = {
       type: "top10",
@@ -461,6 +500,10 @@ export class SheetBuilder {
       const rowValues = data.map(toExcelValue);
       excelRow = this._ws.addRow(rowValues);
     } else {
+      if (this._columns.length === 0 && !this._columnsInferred) {
+        this._columns = Object.keys(data).map((key) => ({ key, header: key }));
+        this._columnsInferred = true;
+      }
       const objValues: Record<string, unknown> = {};
       for (const [k, v] of Object.entries(data)) {
         objValues[k] = toExcelValue(v);
@@ -485,6 +528,7 @@ export class SheetBuilder {
     }
 
     excelRow.commit();
+    this._rowCount++;
   }
 
   private _writeValue(cell: ExcelCell, value: CellValue | undefined): void {

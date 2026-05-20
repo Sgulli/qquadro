@@ -154,7 +154,7 @@ export async function handler(options: ExampleOptions = {}): Promise<WriteResult
       {
         name: "Sales Report",
         tabColor: "FF2B579A",
-        freeze: { row: 3 },
+        freeze: { row: 2 },
         pageSetup: {
           paperSize: 9,
           orientation: "landscape",
@@ -167,10 +167,13 @@ export async function handler(options: ExampleOptions = {}): Promise<WriteResult
         },
       },
       (sheet) => {
-        sheet.merge({ range: "A1:H1", value: "2024 Annual Sales Report", style: sectionTitle });
-        sheet.rowHeight(1, 32);
-        sheet.columns(salesColumns).writeHeaders();
-        sheet.rowHeight(2, 22);
+        sheet.merge({
+          range: "A1:H1",
+          value: "2024 Annual Sales Report",
+          style: sectionTitle,
+          height: 32,
+        });
+        sheet.headers(salesColumns, undefined, 22);
 
         salesData.forEach((row, i) => {
           const r = i + 3;
@@ -206,18 +209,22 @@ export async function handler(options: ExampleOptions = {}): Promise<WriteResult
       {
         name: "KPI Dashboard",
         tabColor: "FF70AD47",
-        freeze: { row: 4 },
+        freeze: { row: 3 },
       },
       (sheet) => {
-        sheet.merge({ range: "A1:F1", value: "Q4 2024 — KPI Dashboard", style: sectionTitle });
-        sheet.rowHeight(1, 36);
+        sheet.merge({
+          range: "A1:F1",
+          value: "Q4 2024 — KPI Dashboard",
+          style: sectionTitle,
+          height: 36,
+        });
         sheet.merge({
           range: "A2:F2",
           value: "Revenue & Pipeline Metrics",
           style: Styles.subHeader,
+          height: 20,
         });
-        sheet.rowHeight(2, 20);
-        sheet.columns(kpiColumns).writeHeaders();
+        sheet.headers(kpiColumns);
 
         const kpiRows = [
           { metric: "New ARR", target: 4_800_000, actual: 5_120_000 },
@@ -262,9 +269,13 @@ export async function handler(options: ExampleOptions = {}): Promise<WriteResult
         tabColor: "FFED7D31",
       },
       (sheet) => {
-        sheet.merge({ range: "A1:C1", value: "Excel Formula Examples", style: sectionTitle });
-        sheet.rowHeight(1, 30);
-        sheet.columns(formulaColumns).writeHeaders();
+        sheet.merge({
+          range: "A1:C1",
+          value: "Excel Formula Examples",
+          style: sectionTitle,
+          height: 30,
+        });
+        sheet.headers(formulaColumns);
 
         sheet.setCell("B3", 50_000, Styles.inputCell);
         sheet.setCell("B4", 75_000, Styles.inputCell);

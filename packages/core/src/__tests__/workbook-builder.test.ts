@@ -15,7 +15,7 @@ describe("WorkbookBuilder", () => {
     const result = await new WorkbookBuilder({ author: "Test" })
       .addSheet({ name: "Sheet1" }, (sheet) => {
         sheet
-          .columns([
+          .headers([
             { key: "name", header: "Name", width: 20, headerStyle: Styles.header },
             {
               key: "value",
@@ -25,7 +25,7 @@ describe("WorkbookBuilder", () => {
               headerStyle: Styles.header,
             },
           ])
-          .writeHeaders()
+
           .addRow({ name: "Alpha", value: 100 })
           .addRow({ name: "Beta", value: 200 });
       })
@@ -40,11 +40,11 @@ describe("WorkbookBuilder", () => {
     const result = await new WorkbookBuilder({ author: "Test" })
       .addSheet({ name: "Summary" }, (sheet) => {
         sheet
-          .columns([
+          .headers([
             { key: "item", header: "Item", width: 15 },
             { key: "qty", header: "Qty", width: 10 },
           ])
-          .writeHeaders()
+
           .addRow({ item: "Widget", qty: 42 });
       })
       .addSheet({ name: "Details" }, (sheet) => {
@@ -92,11 +92,11 @@ describe("WorkbookBuilder", () => {
     const result = await new WorkbookBuilder()
       .addSheet({ name: "Filtered" }, (sheet) => {
         sheet
-          .columns([
+          .headers([
             { key: "x", header: "X", width: 10 },
             { key: "y", header: "Y", width: 10 },
           ])
-          .writeHeaders()
+
           .addRow({ x: 1, y: 2 })
           .autoFilter();
       })
@@ -109,8 +109,8 @@ describe("WorkbookBuilder", () => {
     const result = await new WorkbookBuilder()
       .addSheet({ name: "Styled" }, (sheet) => {
         sheet
-          .columns([{ key: "a", header: "A", width: 10 }])
-          .writeHeaders()
+          .headers([{ key: "a", header: "A", width: 10 }])
+
           .addRow({ a: "Tall" }, { height: 30, style: Styles.totalRow });
       })
       .write(outputPath("row-options.xlsx"));
@@ -132,12 +132,12 @@ describe("WorkbookBuilder", () => {
     const result = await new WorkbookBuilder()
       .addSheet({ name: "F-Sheet" }, (sheet) => {
         sheet
-          .columns([
+          .headers([
             { key: "a", header: "A", width: 10 },
             { key: "b", header: "B", width: 10 },
             { key: "total", header: "Total", width: 15 },
           ])
-          .writeHeaders()
+
           .addRow({ a: 5, b: 10, total: F.add(F.ref("A", 2), F.ref("B", 2)) });
       })
       .write(outputPath("f-formulas.xlsx"));
@@ -202,11 +202,11 @@ describe("WorkbookBuilder", () => {
     const result = await new WorkbookBuilder()
       .addSheet({ name: "Batch" }, (sheet) => {
         sheet
-          .columns([
+          .headers([
             { key: "name", header: "Name", width: 15 },
             { key: "age", header: "Age", width: 8 },
           ])
-          .writeHeaders()
+
           .addRows([
             { name: "Alice", age: 30 },
             { name: "Bob", age: 25 },
@@ -221,11 +221,11 @@ describe("WorkbookBuilder", () => {
     const result = await new WorkbookBuilder()
       .addSheet({ name: "Array" }, (sheet) => {
         sheet
-          .columns([
+          .headers([
             { key: "a", header: "A", width: 10 },
             { key: "b", header: "B", width: 10 },
           ])
-          .writeHeaders()
+
           .addRows([
             [1, 2],
             [3, 4],
@@ -306,11 +306,11 @@ describe("WorkbookBuilder", () => {
     const csv = await new WorkbookBuilder()
       .addSheet({ name: "Data" }, (sheet) => {
         sheet
-          .columns([
+          .headers([
             { key: "name", header: "Name" },
             { key: "age", header: "Age" },
           ])
-          .writeHeaders()
+
           .addRows([
             { name: "Alice", age: 30 },
             { name: "Bob", age: 25 },
@@ -327,8 +327,8 @@ describe("WorkbookBuilder", () => {
     await new WorkbookBuilder()
       .addSheet({ name: "Data" }, (sheet) => {
         sheet
-          .columns([{ key: "x", header: "X" }])
-          .writeHeaders()
+          .headers([{ key: "x", header: "X" }])
+
           .addRow({ x: 42 });
       })
       .toCsv(outputPath("test-out.csv"));
@@ -341,8 +341,8 @@ describe("WorkbookBuilder", () => {
     await new WorkbookBuilder({ author: "Roundtrip" })
       .addSheet({ name: "ReadTest" }, (sheet) => {
         sheet
-          .columns([{ key: "val", header: "Value" }])
-          .writeHeaders()
+          .headers([{ key: "val", header: "Value" }])
+
           .addRow({ val: 99 });
       })
       .write(written);
@@ -358,11 +358,11 @@ describe("WorkbookBuilder", () => {
     await new WorkbookBuilder({ author: "Template" })
       .addSheet({ name: "Sheet1" }, (sheet) => {
         sheet
-          .columns([
+          .headers([
             { key: "item", header: "Item", width: 20 },
             { key: "qty", header: "Qty", width: 10 },
           ])
-          .writeHeaders()
+
           .addRow({ item: "Widget", qty: 10 });
       })
       .write(original);

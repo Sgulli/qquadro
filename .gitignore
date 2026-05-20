@@ -10,3 +10,4 @@ docs/
 coverage
 .claude
 .opencode
+*.DS_Store

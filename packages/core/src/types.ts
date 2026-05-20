@@ -157,6 +157,8 @@ export interface MergeRange {
   value?: CellValue;
   /** Style for the merged cell */
   style?: CellStyle;
+  /** Row height in points */
+  height?: number;
 }
 
 // ─── Row ─────────────────────────────────────────────────────────────────────

@@ -85,38 +85,23 @@ beforeEach(() => {
 });
 
 describe("SheetBuilder", () => {
-  describe("columns / addColumn", () => {
-    it("columns() sets column definitions", () => {
+  describe("headers", () => {
+    it("sets column definitions and writes header row", () => {
       const { ws, sheet } = makeSheet({ name: "Test" });
-      sheet.columns([{ key: "a", header: "A" }]);
-      sheet.writeHeaders();
-      expect(ws.columns).toEqual([{ key: "a", width: 15, hidden: false }]);
-    });
-
-    it("addColumn() appends a column", () => {
-      const { ws, sheet } = makeSheet({ name: "Test" });
-      sheet.addColumn({ key: "a", header: "A" });
-      sheet.addColumn({ key: "b", header: "B" });
-      sheet.writeHeaders();
-      expect(ws.columns).toHaveLength(2);
-    });
-  });
-
-  describe("writeHeaders", () => {
-    it("throws if no columns defined", () => {
-      const { sheet } = makeSheet({ name: "Test" });
-      expect(() => sheet.writeHeaders()).toThrow("Call columns() before writeHeaders()");
-    });
-
-    it("throws if called twice", () => {
-      const { sheet } = makeSheet({ name: "Test" });
-      sheet.columns([{ key: "a", header: "A" }]).writeHeaders();
-      expect(() => sheet.writeHeaders()).toThrow("writeHeaders() already called");
+      sheet.headers([
+        { key: "a", header: "A" },
+        { key: "b", header: "B" },
+      ]);
+      expect(ws.columns).toEqual([
+        { key: "a", width: 15, hidden: false },
+        { key: "b", width: 15, hidden: false },
+      ]);
+      expect(ws.addRow).toHaveBeenCalledWith(["A", "B"]);
     });
 
     it("calls addRow on the underlying worksheet", () => {
       const { ws, sheet } = makeSheet({ name: "Test" });
-      sheet.columns([{ key: "x", header: "X" }]).writeHeaders();
+      sheet.headers([{ key: "x", header: "X" }]);
       expect(ws.addRow).toHaveBeenCalledWith(["X"]);
     });
   });
@@ -150,6 +135,90 @@ describe("SheetBuilder", () => {
       const { ws, sheet } = makeSheet({ name: "Test" });
       sheet.addRows([[1], [2], [3]]);
       expect(ws.addRow).toHaveBeenCalledTimes(3);
+    });
+  });
+
+  describe("rowCount / columnRange", () => {
+    it("tracks row count after addRow", () => {
+      const { sheet } = makeSheet({ name: "Test" });
+      sheet.addRow([1]);
+      expect(sheet.rowCount).toBe(1);
+      sheet.addRow([2]);
+      expect(sheet.rowCount).toBe(2);
+    });
+
+    it("tracks row count after addRows", () => {
+      const { sheet } = makeSheet({ name: "Test" });
+      sheet.addRows([[1], [2], [3]]);
+      expect(sheet.rowCount).toBe(3);
+    });
+
+    it("columnRange resolves column key to range string", () => {
+      const { sheet } = makeSheet({ name: "Test" });
+      sheet
+        .headers([
+          { key: "name", header: "Name" },
+          { key: "score", header: "Score" },
+        ])
+        .addRows([
+          { name: "Alice", score: 85 },
+          { name: "Bob", score: 42 },
+        ]);
+      expect(sheet.columnRange("name")).toBe("A2:A3");
+      expect(sheet.columnRange("score")).toBe("B2:B3");
+    });
+
+    it("columnRange accepts custom startRow", () => {
+      const { sheet } = makeSheet({ name: "Test" });
+      sheet.headers([{ key: "x", header: "X" }]);
+      sheet.addRow(["a"]);
+      expect(sheet.columnRange("x", 1)).toBe("A1:A1");
+    });
+
+    it("columnRange throws for unknown key", () => {
+      const { sheet } = makeSheet({ name: "Test" });
+      expect(() => sheet.columnRange("missing")).toThrow("No column with key");
+    });
+  });
+
+  describe("auto-inferred columns", () => {
+    it("infers columns from first object row", () => {
+      const { sheet } = makeSheet({ name: "Test" });
+      sheet.addRow({ name: "Alice", score: 85 });
+      expect(sheet.columnRange("name")).toBe("A1:A1");
+      expect(sheet.columnRange("score")).toBe("B1:B1");
+    });
+
+    it("columnRange works after addRows with inferred columns", () => {
+      const { sheet } = makeSheet({ name: "Test" });
+      sheet.addRows([
+        { product: "Widget", quantity: 10 },
+        { product: "Gadget", quantity: 20 },
+        { product: "Doohickey", quantity: 30 },
+      ]);
+      expect(sheet.rowCount).toBe(3);
+      expect(sheet.columnRange("product")).toBe("A1:A3");
+      expect(sheet.columnRange("quantity")).toBe("B1:B3");
+    });
+
+    it("explicit columns take precedence over inference", () => {
+      const { sheet } = makeSheet({ name: "Test" });
+      sheet.headers([{ key: "custom", header: "Custom" }]);
+      sheet.addRow({ name: "Alice", score: 85 });
+      expect(sheet.columnRange("custom")).toBe("A2:A2");
+      expect(() => sheet.columnRange("name")).toThrow("No column with key");
+    });
+
+    it("headers() combines columns + writeHeaders", () => {
+      const { ws, sheet } = makeSheet({ name: "Test" });
+      sheet
+        .headers([
+          { key: "a", header: "A" },
+          { key: "b", header: "B" },
+        ])
+        .addRow({ a: 1, b: 2 });
+      expect(ws.addRow).toHaveBeenCalledWith(["A", "B"]);
+      expect(sheet.columnRange("a")).toBe("A2:A2");
     });
   });
 
