@@ -5,6 +5,7 @@ output
 *.zip
 *.tgz
 .env
-scripts/generate-*
-scripts/*.json
 docs/
+.turbo
+coverage
+.claude

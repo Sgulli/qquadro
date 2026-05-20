@@ -1,0 +1,9 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "extends": "./node.json",
+  "compilerOptions": {
+    "module": "es2020",
+    "moduleResolution": "bundler",
+    "emitDeclarationOnly": true
+  }
+}

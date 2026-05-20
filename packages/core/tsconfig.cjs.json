@@ -1,0 +1,8 @@
+{
+  "extends": "@quadro/tsconfig/cjs-declarations.json",
+  "compilerOptions": {
+    "outDir": "./dist/cjs"
+  },
+  "include": ["src/**/*"],
+  "exclude": ["src/__tests__"]
+}

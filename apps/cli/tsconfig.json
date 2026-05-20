@@ -1,0 +1,11 @@
+{
+  "extends": "@quadro/tsconfig/node.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "declaration": false,
+    "declarationMap": false,
+    "sourceMap": false,
+    "rootDir": "./src",
+  },
+  "include": ["src/**/*"],
+}

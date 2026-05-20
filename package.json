@@ -1,43 +1,28 @@
 {
-  "name": "quadro",
-  "version": "0.0.1",
-  "description": "Fluent, fully-typed Excel builder for Node.js — styles, formulas, merged cells, headers, streaming",
-  "main": "dist/cjs/index.js",
-  "types": "dist/cjs/index.d.ts",
-  "exports": {
-    ".": {
-      "import": "./dist/esm/index.js",
-      "require": "./dist/cjs/index.js"
-    }
+  "name": "quadro-monorepo",
+  "private": true,
+  "packageManager": "pnpm@11.1.2",
+  "author": {
+    "name": "sgulli"
   },
-  "files": [
-    "dist"
-  ],
   "scripts": {
-    "clean": "rm -rf dist",
-    "build": "npm run clean && npm run build:js && npm run build:dts",
-    "build:js": "rolldown -c",
-    "build:dts": "tsc -p tsconfig.cjs.json && tsc -p tsconfig.esm.json",
-    "prepublishOnly": "npm run build",
-    "typecheck": "tsc --noEmit",
-    "example": "ts-node scripts/example.ts"
-  },
-  "keywords": [
-    "excel",
-    "xlsx",
-    "excelts",
-    "typescript",
-    "builder"
-  ],
-  "license": "MIT",
-  "dependencies": {
-    "@cj-tech-master/excelts": "^9.5.4"
+    "build": "turbo run build",
+    "typecheck": "turbo run typecheck",
+    "clean": "turbo run clean",
+    "dev": "turbo run dev",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "format": "biome format .",
+    "format:fix": "biome format --write .",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.4.15",
     "@types/node": "^22.0.0",
-    "fast-xml-parser": "^5.8.0",
-    "rolldown": "^1.0.1",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.8.3"
+    "@vitest/coverage-v8": "^4.1.6",
+    "turbo": "^2.9.14",
+    "typescript": "^5.8.3",
+    "vitest": "^4.1.6"
   }
 }

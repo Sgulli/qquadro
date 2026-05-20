@@ -1,0 +1,24 @@
+{
+  "name": "@quadro/cli",
+  "version": "0.1.0",
+  "type": "module",
+  "bin": {
+    "quadro": "./dist/index.js"
+  },
+  "scripts": {
+    "clean": "rm -rf dist",
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "@quadro/core": "workspace:*",
+    "citty": "^0.1.6",
+    "fast-xml-parser": "^5.8.0"
+  },
+  "devDependencies": {
+    "@quadro/tsconfig": "workspace:*",
+    "@types/node": "^22.0.0",
+    "typescript": "^5.8.3"
+  }
+}

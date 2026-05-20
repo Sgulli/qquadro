@@ -1,9 +1,9 @@
 # quadro
 
-Fluent, fully-typed Excel builder for Node.js. Powered by [ExcelTS](https://github.com/cjnoname/excelts).
+Fluent, fully-typed Excel builder for Node.js. Built on [ExcelTS](https://github.com/cjnoname/excelts).
 
 ```ts
-import { WorkbookBuilder, Styles, F } from "quadro";
+import { WorkbookBuilder, Styles, F } from "@quadro/core";
 
 await new WorkbookBuilder({ author: "Acme Corp" })
   .addSheet({ name: "Sales" }, (sheet) => {
@@ -29,8 +29,8 @@ await new WorkbookBuilder({ author: "Acme Corp" })
 
 ## Install
 
-```
-npm install quadro
+```sh
+npm install @quadro/core
 ```
 
 Requires Node 18+.
@@ -38,6 +38,9 @@ Requires Node 18+.
 ## Features
 
 - **Fluent API** — chain `.columns()`, `.addRow()`, `.merge()`, `.freeze()`, etc.
+- **Workbook reading** — load, modify, re-save existing XLSX files
+- **CSV import/export** — read/write CSV to files or strings
+- **Sheet-to-JSON** — convert worksheet data to objects or arrays
 - **Formulas** — typed helpers (`F.sum()`, `F.pct()`, `F.add()`, etc.) or raw `{ formula: "..." }`
 - **Styles** — presets (`Styles.header`, `Styles.currency`, `Styles.totalRow`) or custom
 - **Merged cells** — `.merge()` with value & style in one call
@@ -48,13 +51,11 @@ Requires Node 18+.
 
 ## Quick Tour
 
+### Creating Workbooks
+
 ```ts
 const wb = new WorkbookBuilder({ author: "Acme Corp", useSharedStrings: true });
-```
 
-**Sheet with columns & formulas:**
-
-```ts
 wb.addSheet({ name: "Sales", freeze: { row: 3 } }, (sheet) => {
   sheet.merge({ range: "A1:F1", value: "Report", style: Styles.header });
   sheet.columns([
@@ -78,12 +79,51 @@ wb.addSheet({ name: "Sales", freeze: { row: 3 } }, (sheet) => {
   );
   sheet.autoFilter("A2:D2");
 });
+
+const { filePath, sizeBytes } = await wb.write("./output/report.xlsx");
 ```
 
-**Write to disk:**
+### Reading Workbooks
 
 ```ts
-const { filePath, sizeBytes } = await wb.write("./output/report.xlsx");
+import { WorkbookBuilder } from "@quadro/core";
+
+const wb = await WorkbookBuilder.load("./input.xlsx");
+
+// Read data as objects (first row = headers)
+const data = wb.sheets[0].toJSON();
+// => [{ Name: "Alice", Age: 30 }, { Name: "Bob", Age: 25 }]
+
+// Read as array of arrays
+const rows = wb.sheets[0].toJSON({ header: 1 });
+// => [["Name", "Age"], ["Alice", 30], ["Bob", 25]]
+
+// Read as array of arrays with toAOA
+const aoa = wb.sheets[0].toAOA();
+// => [["Name", "Age"], ["Alice", 30], ["Bob", 25]]
+```
+
+### Template Workflow
+
+Load an existing file, modify it, and save a new version:
+
+```ts
+const wb = await WorkbookBuilder.load("./template.xlsx");
+// modify existing sheets or add new ones
+await wb.write("./output.xlsx");
+```
+
+### CSV Import/Export
+
+```ts
+// Write CSV
+const csvString = await wb.toCsv();
+await wb.toCsv("./output.csv");
+
+// Read CSV
+const csvWb = await WorkbookBuilder.fromCsv("name,age\nAlice,30\nBob,25", {
+  fileName: "data.csv",
+});
 ```
 
 ### Streaming (large files)
@@ -93,17 +133,37 @@ const wb = new WorkbookBuilder({ useStreaming: true });
 // add rows — memory usage stays constant
 ```
 
+### Adding Data from JSON
+
+```ts
+wb.sheets[0].addJSON([
+  { Name: "Alice", Age: 30 },
+  { Name: "Bob", Age: 25 },
+]);
+
+wb.sheets[0].addAOA([
+  ["Name", "Age"],
+  ["Alice", 30],
+  ["Bob", 25],
+]);
+```
+
 ## Formula Helpers
 
 | Helper | Output | Example |
 |--------|--------|---------|
 | `F.ref(col, row)` | `"C3"` | cell reference |
 | `F.range(col, from, to)` | `"C3:C8"` | column range |
+| `F.rect(col1, row1, col2, row2)` | `"A1:D10"` | rectangular range |
 | `F.sum(range)` | `SUM(C3:C8)` | aggregate |
 | `F.average(range)` | `AVERAGE(C3:C8)` | |
+| `F.count(range)` | `COUNT(C3:C8)` | |
+| `F.max(range)` | `MAX(C3:C8)` | |
+| `F.min(range)` | `MIN(C3:C8)` | |
 | `F.pct(current, prev)` | `(C3-D3)/D3` | growth % |
 | `F.add(a, b, ...)` | `C3+D3+E3` | arithmetic |
 | `F.sub(a, b)` | `C3-D3` | |
+| `F.mul(a, b)` | `C3*D3` | |
 | `F.div(a, b)` | `C3/D3` | |
 | `F.if(cond, t, f)` | `IF(C3>0,"ok","bad")` | conditional |
 
@@ -131,7 +191,7 @@ Raw formulas also work: `{ formula: "SUM(C3:C8)", result: 217000 }`.
 Build styles from partials with `style()` — deep-merges font, fill, border, alignment, and numberFormat so you can mix reusable pieces.
 
 ```ts
-import { style, font, fill, numFmt, border, align, currency } from "quadro";
+import { style, font, fill, numFmt, border, align, currency } from "@quadro/core";
 
 const euroCell = style(
   font({ bold: true, size: 10, name: "Arial" }),

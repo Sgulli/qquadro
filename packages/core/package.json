@@ -1,0 +1,48 @@
+{
+  "name": "@quadro/core",
+  "version": "0.0.1",
+  "description": "Fluent, fully-typed Excel builder for Node.js — styles, formulas, merged cells, headers, streaming",
+  "type": "module",
+  "main": "dist/cjs/index.js",
+  "types": "dist/cjs/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "clean": "rm -rf dist",
+    "build": "npm run clean && npm run build:js && npm run build:dts",
+    "build:js": "rolldown -c",
+    "build:dts": "tsc -p tsconfig.cjs.json && tsc -p tsconfig.esm.json",
+    "prepublishOnly": "npm run build",
+    "typecheck": "tsc -p tsconfig.cjs.json --noEmit",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
+  },
+  "keywords": [
+    "excel",
+    "xlsx",
+    "excelts",
+    "typescript",
+    "builder"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@cj-tech-master/excelts": "^9.5.4"
+  },
+  "devDependencies": {
+    "@quadro/tsconfig": "workspace:*",
+    "rolldown": "^1.0.1",
+    "typescript": "^5.8.3",
+    "@vitest/coverage-v8": "^4.1.6",
+    "vitest": "^4.1.6"
+  }
+}
