@@ -1,6 +1,6 @@
 # Roadmap
 
-## v0.1 — Foundation
+## v0.1 — Foundation ✅
 
 - [x] Add test framework (vitest)
 - [x] Unit tests for WorkbookBuilder, SheetBuilder, formulas, styles
@@ -11,33 +11,50 @@
 - [x] CHANGELOG.md
 - [x] CONTRIBUTING.md
 
-## v0.2 — Workbook Reading
+## v0.2 — Workbook Reading ✅
 
 - [x] Read existing XLSX files (`WorkbookBuilder.load()`, `WorkbookBuilder.fromFile()`)
 - [x] Template workflow: load → modify → re-save
 - [x] Sheet-to-JSON conversion (`sheet.toJSON()`, `sheet.toAOA()`)
 - [x] CSV import/export (`WorkbookBuilder.toCsv()`, `WorkbookBuilder.fromCsv()`)
 
-## v0.3 — Data & Validation Layer
+## v0.3 — Data & Validation Layer ✅ (2026-05-20)
 
-- [ ] Data Validation (dropdown lists, number ranges, date constraints, custom formulas)
-- [ ] Conditional Formatting (color scales, data bars, icon sets, cell rules)
+- [x] Data Validation (dropdown lists, number ranges, date constraints, custom formulas)
+- [x] Conditional Formatting (color scales, data bars, icon sets, cell rules, expression rules, top N, text, time period)
+- [x] `headers()` replaces `columns()` + `writeHeaders()`
+- [x] Merge/header height inline (no separate `rowHeight()` calls)
+- [x] Columns auto-inferred from first object row
+- [x] Full numeric RC API (`setCellRC`, `mergeRC`, `styleRangeRC`, `colWidthRC`)
+- [x] RC overloads for all validation and conditional formatting methods
+- [x] `cellRef()`, `colRange()`, `rangeRef()` coordinate utilities
+- [x] `columnIndex()` / `columnRange()` for column-keyed references
+- [x] `removeDataValidation()` / `removeConditionalFormatting()`
+- [x] CLI commands exposed via `pnpm cli` / `pnpm example`
+- [x] assignments.ts rewritten with pure numeric coordinates
+
+## v0.4 — Named Ranges, Tables & Charting
+
 - [ ] Named Ranges / Defined Names
 - [ ] Tables (structured references, totals row, banded rows, table styles)
-
-## v0.4 — Charting & Visuals
-
 - [ ] Charts API (bar, line, pie, scatter, bubble, radar, stock, surface, waterfall, treemap, sunburst, funnel, histogram, pareto, boxWhisker, regionMap, combo)
 - [ ] Sparklines (in-cell mini charts)
 - [ ] Images (embed PNG/JPEG in cells, backgrounds, watermarks)
 - [ ] Hyperlinks
-
-## v0.5 — Rich Content
-
 - [ ] Rich Text (mixed bold/italic/color within a single cell)
+
+## v0.5 — Comments, Controls & Sheet Management
+
 - [ ] Comments / Notes (classic VML + threaded)
 - [ ] Form Controls (checkboxes)
 - [ ] Sheet state (hidden / veryHidden)
+- [ ] Sheet operations: insert/remove/duplicate rows, columns, sheets
+- [ ] Print titles (repeat rows/columns on every printed page)
+- [ ] Page breaks (manual row/column breaks)
+- [ ] Sheet zoom
+- [ ] Custom workbook properties (title, subject, keywords, category, manager)
+- [ ] Ignored errors (suppress green triangles)
+- [ ] External workbook references
 
 ## v0.6 — Formula Expansion
 
@@ -51,17 +68,7 @@
 - [ ] Rank: RANK, LARGE, SMALL
 - [ ] Array formulas (FILTER, SORT, UNIQUE, CSE)
 
-## v0.7 — Advanced Workbook
-
-- [ ] Sheet operations: insert/remove/duplicate rows, columns, sheets
-- [ ] Print titles (repeat rows/columns on every printed page)
-- [ ] Page breaks (manual row/column breaks)
-- [ ] Sheet zoom
-- [ ] Custom workbook properties (title, subject, keywords, category, manager)
-- [ ] Ignored errors (suppress green triangles)
-- [ ] External workbook references
-
-## v0.8 — Performance & Polish
+## v0.7 — Performance & Polish
 
 - [ ] Reactive formula calculation (`workbook.calculate()` via excelts 433-function engine)
 - [ ] Custom function registration (user-defined UDFs)
@@ -71,7 +78,7 @@
 - [ ] PDF export from Excel
 - [ ] Markdown table import/export
 
-## v0.9 — DX & Design Improvements
+## v0.8 — DX & Design Improvements
 
 - [ ] `style()` deep-merge fills consistently with font/border
 - [ ] `_finalizeAll()` use `Promise.allSettled` with error collection
