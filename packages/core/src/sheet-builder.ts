@@ -600,7 +600,7 @@ export class SheetBuilder {
     ref: string,
     columns: TableColumnProperties[],
     options?: {
-      rows?: Array<Array<ExcelCellValue>>;
+      rows?: ExcelCellValue[][];
       headerRow?: boolean;
       totalsRow?: boolean;
       style?: TableStyleProperties;
@@ -626,7 +626,7 @@ export class SheetBuilder {
     row2: number,
     columns: TableColumnProperties[],
     options?: {
-      rows?: Array<Array<ExcelCellValue>>;
+      rows?: ExcelCellValue[][];
       headerRow?: boolean;
       totalsRow?: boolean;
       style?: TableStyleProperties;

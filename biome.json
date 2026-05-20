@@ -27,7 +27,8 @@
       },
       "style": {
         "useConst": "error",
-        "noNonNullAssertion": "warn"
+        "noNonNullAssertion": "warn",
+        "useConsistentArrayType": { "level": "error", "options": { "syntax": "shorthand" } }
       }
     }
   },

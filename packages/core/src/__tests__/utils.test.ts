@@ -263,23 +263,23 @@ describe("border presets", () => {
   });
 
   it("thinGrey uses grey color", () => {
-    expect(border.thinGrey.border!.top!.color).toBe("FFBFBFBF");
+    expect(border.thinGrey.border?.top?.color).toBe("FFBFBFBF");
   });
 
   it("mediumBlack uses medium style", () => {
-    expect(border.mediumBlack.border!.top!.style).toBe("medium");
+    expect(border.mediumBlack.border?.top?.style).toBe("medium");
   });
 
   it("thin() factory creates custom color", () => {
     const b = border.thin("FF00FF00").border!;
-    expect(b.top!.color).toBe("FF00FF00");
-    expect(b.top!.style).toBe("thin");
+    expect(b.top?.color).toBe("FF00FF00");
+    expect(b.top?.style).toBe("thin");
   });
 
   it("all() factory creates custom style + color", () => {
     const b = border.all("dashed", "FF0000FF").border!;
-    expect(b.top!.style).toBe("dashed");
-    expect(b.top!.color).toBe("FF0000FF");
+    expect(b.top?.style).toBe("dashed");
+    expect(b.top?.color).toBe("FF0000FF");
   });
 });
 

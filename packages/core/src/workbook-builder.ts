@@ -25,7 +25,7 @@ export class WorkbookBuilder {
     for (let i = 0; i < wb.worksheets.length; i++) {
       const ws = wb.getWorksheet(i + 1);
       if (!ws) continue;
-      builder._sheets.push(new SheetBuilder(ws, { name: wb.worksheets[i]!.name }));
+      builder._sheets.push(new SheetBuilder(ws, { name: wb.worksheets[i]?.name }));
     }
     return builder;
   }
