@@ -7,6 +7,12 @@
 - Conditional formatting: `sheet.addDataBar()`, `sheet.addColorScale()`, `sheet.addIconSet()`
 - Conditional formatting: `sheet.addTop10Rule()`, `sheet.addAboveAverageRule()`, `sheet.addContainsTextRule()`, `sheet.addTimePeriodRule()`
 - Exported `DataValidation`, `ConditionalFormattingOptions`, and related types from `@quadro/core`
+- Simplified API: `headers()` replaces `columns()` + `writeHeaders()` in one call
+- `merge()` accepts optional `height` property (no separate `rowHeight()` call needed)
+- `headers()` accepts optional `height` parameter
+- Columns auto-inferred from first object row when not explicitly defined
+- `columnRange()` auto-detects header offset (row 1 vs row 2)
+- CLI commands exposed via `pnpm cli` and `pnpm example`
 
 ## 0.2.0 (unreleased)
 
