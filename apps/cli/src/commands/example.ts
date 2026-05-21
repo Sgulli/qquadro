@@ -4,7 +4,7 @@ import { F, Styles, WorkbookBuilder } from "@quadro/core";
 import { defineCommand } from "citty";
 
 const sectionTitle: CellStyle = {
-  font: { bold: true, size: 13, color: "FF1F497D", name: "Arial" },
+  font: { bold: true, size: 13, color: { argb: "FF1F497D" }, name: "Arial" },
   fill: { type: "solid", color: "FFD9E1F2" },
   alignment: { horizontal: "center", vertical: "middle" },
   border: {
@@ -18,7 +18,7 @@ const altRow: CellStyle = {
 };
 
 const highlight: CellStyle = {
-  font: { bold: true, color: "FF9C0006" },
+  font: { bold: true, color: { argb: "FF9C0006" } },
   fill: { type: "solid", color: "FFFFC7CE" },
 };
 
@@ -283,15 +283,15 @@ export async function handler(options: ExampleOptions = {}): Promise<WriteResult
 
         sheet.addRow(
           { label: "Base Value A", value: 50_000, note: "Hardcoded input" },
-          { style: { font: { color: "FF0000FF" } } },
+          { style: { font: { color: { argb: "FF0000FF" } } } },
         );
         sheet.addRow(
           { label: "Base Value B", value: 75_000, note: "Hardcoded input" },
-          { style: { font: { color: "FF0000FF" } } },
+          { style: { font: { color: { argb: "FF0000FF" } } } },
         );
         sheet.addRow(
           { label: "Base Value C", value: 92_000, note: "Hardcoded input" },
-          { style: { font: { color: "FF0000FF" } } },
+          { style: { font: { color: { argb: "FF0000FF" } } } },
         );
         sheet.addRow({ label: "SUM(A+B+C)", value: F.sum("B3:B5", 217_000), note: "=SUM(B3:B5)" });
         sheet.addRow({
@@ -318,7 +318,9 @@ export async function handler(options: ExampleOptions = {}): Promise<WriteResult
           value: "This cell spans two columns",
           style: { ...Styles.boxBorder, alignment: { horizontal: "center" } },
         });
-        sheet.setCell("C14", "merged A14:B14", { font: { italic: true, color: "FF595959" } });
+        sheet.setCell("C14", "merged A14:B14", {
+          font: { italic: true, color: { argb: "FF595959" } },
+        });
         sheet.merge({ range: "A15:C15", value: "Full-width highlight", style: highlight });
         sheet.autoFitColumns();
       },

@@ -1,6 +1,6 @@
 # quadro
 
-Fluent, fully-typed Excel workbook builder for Node.js. Built on [excelts](https://github.com/cj-tech-master/excelts) by [@cj-tech-master](https://github.com/cj-tech-master). Created by [@sgulli](https://github.com/Sgulli).
+Fluent, fully-typed Excel workbook builder for Node.js. Built on [excelts](https://github.com/cjnoname/excelts) by [@cjnoname](https://github.com/cjnoname). Created by [@sgulli](https://github.com/Sgulli).
 
 ```ts
 import { WorkbookBuilder, Styles, F } from "@quadro/core";

@@ -653,6 +653,49 @@ describe("SheetBuilder", () => {
     });
   });
 
+  describe("comments / notes", () => {
+    it("addNote sets cell note text", () => {
+      const { ws, sheet } = makeSheet({ name: "Test" });
+      sheet.addNote("A1", "Reviewed by John");
+      const cell = ws.getCell("A1");
+      expect(cell.note).toBeDefined();
+    });
+
+    it("addNoteRC delegates with cellRef", () => {
+      const { ws, sheet } = makeSheet({ name: "Test" });
+      vi.spyOn(ws, "getCell");
+      sheet.addNoteRC(2, 3, "Note text");
+      expect(ws.getCell).toHaveBeenCalledWith("B3");
+    });
+
+    it("addComment sets note text", () => {
+      const { ws, sheet } = makeSheet({ name: "Test" });
+      sheet.addComment("A1", "Reviewed by John");
+      const cell = ws.getCell("A1");
+      expect(cell.note).toBeDefined();
+    });
+
+    it("addCommentRC delegates with cellRef", () => {
+      const { ws, sheet } = makeSheet({ name: "Test" });
+      vi.spyOn(ws, "getCell");
+      sheet.addCommentRC(1, 1, "Simple note");
+      expect(ws.getCell).toHaveBeenCalledWith("A1");
+    });
+
+    it("addThreadedComment pushes to ws.threadedComments", () => {
+      const { ws, sheet } = makeSheet({ name: "Test" });
+      vi.spyOn(ws.threadedComments, "push");
+      sheet.addThreadedComment("A1", { personId: "{person-1}", text: "Great work!" });
+      expect(ws.threadedComments.push).toHaveBeenCalled();
+    });
+
+    it("methods are chainable", () => {
+      const { sheet } = makeSheet({ name: "Test" });
+      const result = sheet.addNote("A1", "Note 1").addNoteRC(2, 2, "Note 2");
+      expect(result).toBe(sheet);
+    });
+  });
+
   describe("rich text", () => {
     it("setCellRichText sets rich text value", () => {
       const { ws, sheet } = makeSheet({ name: "Test" });
