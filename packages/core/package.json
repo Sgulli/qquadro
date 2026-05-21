@@ -1,5 +1,5 @@
 {
-  "name": "@quadro/core",
+  "name": "@qquadro/core",
   "version": "0.4.0",
   "description": "Fluent, fully-typed Excel builder for Node.js — styles, formulas, merged cells, headers, streaming",
   "type": "module",

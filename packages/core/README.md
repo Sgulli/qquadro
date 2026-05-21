@@ -1,9 +1,9 @@
-# @quadro/core
+# @qquadro/core
 
 Fluent, fully-typed Excel workbook builder for Node.js. Built on [excelts](https://github.com/cjnoname/excelts) by [@cjnoname](https://github.com/cjnoname). Created by [@sgulli](https://github.com/Sgulli).
 
 ```ts
-import { WorkbookBuilder, Styles, F } from "@quadro/core";
+import { WorkbookBuilder, Styles, F } from "@qquadro/core";
 
 await new WorkbookBuilder({ author: "Acme Corp" })
   .addSheet({ name: "Sales" }, (sheet) => {
@@ -48,7 +48,7 @@ Restrict cell input with dropdown lists, number ranges, dates, or custom formula
 Columns are inferred from your data — no need to define them explicitly:
 
 ```ts
-import { WorkbookBuilder } from "@quadro/core";
+import { WorkbookBuilder } from "@qquadro/core";
 
 await new WorkbookBuilder()
   .addSheet({ name: "Validation" }, (sheet) => {
@@ -74,7 +74,7 @@ await new WorkbookBuilder()
 Highlight cells, add data bars, color scales, icon sets, and top N rules. Columns are inferred from your data:
 
 ```ts
-import { WorkbookBuilder } from "@quadro/core";
+import { WorkbookBuilder } from "@qquadro/core";
 
 await new WorkbookBuilder()
   .addSheet({ name: "Formatting" }, (sheet) => {
@@ -109,7 +109,7 @@ await new WorkbookBuilder()
 All methods that accept A1-style cell references have a numeric `RC` counterpart — build entire workbooks with `for` loops, no string concatenation.
 
 ```ts
-import { WorkbookBuilder, F, rangeRef, colRange, cellRef } from "@quadro/core";
+import { WorkbookBuilder, F, rangeRef, colRange, cellRef } from "@qquadro/core";
 
 const data = [
   { name: "Alice", score: 85, status: "Pass" },
@@ -187,19 +187,19 @@ sheet.columnIndex("score")  // → 2  (1‑based index from headers)
 ## Installation
 
 ```bash
-npm install @quadro/core
+npm install @qquadro/core
 ```
 
 ```bash
-pnpm add @quadro/core
+pnpm add @qquadro/core
 ```
 
 ```bash
-yarn add @quadro/core
+yarn add @qquadro/core
 ```
 
 ```bash
-bun add @quadro/core
+bun add @qquadro/core
 ```
 
 ## Documentation

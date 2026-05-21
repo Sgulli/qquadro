@@ -16,7 +16,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@quadro/core": "workspace:*",
+    "@qquadro/core": "workspace:*",
     "citty": "^0.1.6",
     "fast-xml-parser": "^5.8.0"
   },

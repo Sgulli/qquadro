@@ -31,7 +31,7 @@ pnpm format:fix
 
 ```
 quadro/
-├── packages/core/        # @quadro/core — publishable library
+├── packages/core/        # @qquadro/core — publishable library
 ├── packages/tsconfig/    # @quadro/tsconfig — shared TypeScript configs
 └── apps/cli/             # @quadro/cli — CLI tool
 ```

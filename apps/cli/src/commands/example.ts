@@ -1,6 +1,6 @@
 import path from "node:path";
-import type { CellStyle, ColumnDef, WriteResult } from "@quadro/core";
-import { F, Styles, WorkbookBuilder } from "@quadro/core";
+import type { CellStyle, ColumnDef, WriteResult } from "@qquadro/core";
+import { F, Styles, WorkbookBuilder } from "@qquadro/core";
 import { defineCommand } from "citty";
 
 const sectionTitle: CellStyle = {

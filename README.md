@@ -3,7 +3,7 @@
 Fluent, fully-typed Excel workbook builder for Node.js. Built on [excelts](https://github.com/cjnoname/excelts) by [@cjnoname](https://github.com/cjnoname). Created by [@sgulli](https://github.com/Sgulli).
 
 ```ts
-import { WorkbookBuilder, Styles, F } from "@quadro/core";
+import { WorkbookBuilder, Styles, F } from "@qquadro/core";
 
 await new WorkbookBuilder({ author: "Acme Corp" })
   .addSheet({ name: "Sales" }, (sheet) => {
@@ -28,19 +28,19 @@ await new WorkbookBuilder({ author: "Acme Corp" })
 ## Install
 
 ```sh
-npm install @quadro/core
+npm install @qquadro/core
 ```
 
 ```sh
-pnpm add @quadro/core
+pnpm add @qquadro/core
 ```
 
 ```sh
-yarn add @quadro/core
+yarn add @qquadro/core
 ```
 
 ```sh
-bun add @quadro/core
+bun add @qquadro/core
 ```
 
 Requires Node 18+.
@@ -260,7 +260,7 @@ Raw formulas also work: `{ formula: "SUM(C3:C8)", result: 217000 }`.
 ### Composable styles
 
 ```ts
-import { style, font, fill, numFmt, border, align, currency } from "@quadro/core";
+import { style, font, fill, numFmt, border, align, currency } from "@qquadro/core";
 
 const euroCell = style(
   font({ bold: true, size: 10, name: "Arial" }),

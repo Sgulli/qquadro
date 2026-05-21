@@ -1,5 +1,5 @@
 import path from "node:path";
-import type { WriteResult } from "@quadro/core";
+import type { WriteResult } from "@qquadro/core";
 import {
   align,
   border,
@@ -9,7 +9,7 @@ import {
   rangeRef,
   style,
   WorkbookBuilder,
-} from "@quadro/core";
+} from "@qquadro/core";
 import { defineCommand } from "citty";
 import {
   mockClubs,

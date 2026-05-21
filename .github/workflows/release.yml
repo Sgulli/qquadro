@@ -48,8 +48,8 @@ jobs:
 
       - run: pnpm turbo run typecheck test build
 
-      - name: Publish @quadro/core
-        run: pnpm -F @quadro/core publish --provenance --no-git-checks
+      - name: Publish @qquadro/core
+        run: pnpm -F @qquadro/core publish --provenance --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
