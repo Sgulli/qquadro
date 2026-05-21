@@ -193,6 +193,11 @@ export class WorkbookBuilder {
     return this._wb.addImage(image);
   }
 
+  /** Register a person for threaded comments. Returns the person id. */
+  registerPerson(displayName: string, userId?: string, providerId?: string): string {
+    return this._wb.registerPerson(displayName, userId, providerId);
+  }
+
   private async _finalizeAll(): Promise<void> {
     await Promise.all(this._sheets.map((s) => s._finalize()));
   }

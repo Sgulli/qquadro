@@ -57,6 +57,7 @@ import type {
   RowData,
   RowOptions,
   SheetOptions,
+  ThreadedComment,
   WatermarkOptions,
 } from "./types.js";
 import {
@@ -654,6 +655,35 @@ export class SheetBuilder {
   ): this {
     const ref = rangeRef(col1, row1, col2, row2);
     return this.addTable(name, ref, columns, options);
+  }
+
+  // ── Comments / Notes ─────────────────────────────────────────────────────────
+
+  addNote(address: string, text: string): this {
+    this._ws.getCell(address).note = text;
+    return this;
+  }
+
+  addNoteRC(col: number, row: number, text: string): this {
+    return this.addNote(cellRef(col, row), text);
+  }
+
+  addComment(address: string, text: string): this {
+    this._ws.getCell(address).note = text;
+    return this;
+  }
+
+  addCommentRC(col: number, row: number, text: string): this {
+    return this.addComment(cellRef(col, row), text);
+  }
+
+  addThreadedComment(ref: string, comment: ThreadedComment): this {
+    const entry: { ref: string; comment: ThreadedComment } = {
+      ref,
+      comment: { ...comment, date: comment.date ?? new Date().toISOString() },
+    };
+    this._ws.threadedComments.push(entry);
+    return this;
   }
 
   // ── Hyperlinks ──────────────────────────────────────────────────────────────

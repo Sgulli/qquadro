@@ -28,7 +28,11 @@ export function toExcelFont(font: Font): Partial<ExcelFont> {
     italic: font.italic,
     underline: font.underline,
     strike: font.strike,
-    color: font.color ? { argb: normalizeArgb(font.color) } : undefined,
+    color: font.color
+      ? typeof font.color === "string"
+        ? { argb: normalizeArgb(font.color) }
+        : { argb: font.color.argb, theme: font.color.theme }
+      : undefined,
     vertAlign: font.vertAlign,
   };
 }
@@ -135,6 +139,13 @@ export function formatHeaderFooterSection(section: HeaderFooterSection): string 
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
+
+import type { Color } from "./types.js";
+
+/** Create a color from an ARGB hex string (e.g. "FFFFFFFF" for white). */
+export function color(argb: string): Partial<Color> {
+  return { argb };
+}
 
 function normalizeArgb(hex: string): string {
   const clean = hex.replace(/^#/, "");
@@ -332,7 +343,7 @@ export function numFmt(opts: NumberFormat): CellStyle {
 export const Styles = {
   /** Bold white text on blue — ideal for column headers */
   header: {
-    font: { bold: true, color: "FFFFFFFF", name: "Arial", size: 11 },
+    font: { bold: true, color: { argb: "FFFFFFFF" }, name: "Arial", size: 11 },
     fill: { type: "solid", color: "FF2B579A" },
     alignment: { horizontal: "center", vertical: "middle" },
     border: { bottom: { style: "medium", color: "FF1A3A6B" } },
@@ -340,7 +351,7 @@ export const Styles = {
 
   /** Lighter blue — sub-section headers */
   subHeader: {
-    font: { bold: true, name: "Arial", size: 10, color: "FF1F497D" },
+    font: { bold: true, name: "Arial", size: 10, color: { argb: "FF1F497D" } },
     fill: { type: "solid", color: "FFDCE6F1" },
     alignment: { horizontal: "left", vertical: "middle" },
   } as const satisfies CellStyle,
@@ -388,16 +399,16 @@ export const Styles = {
 
   /** Blue font — financial-model convention for hardcoded inputs */
   inputCell: {
-    font: { color: "FF0000FF", name: "Arial", size: 10 },
+    font: { color: { argb: "FF0000FF" }, name: "Arial", size: 10 },
   } as const satisfies CellStyle,
 
   /** Black font — financial-model convention for formula cells */
   formulaCell: {
-    font: { color: "FF000000", name: "Arial", size: 10 },
+    font: { color: { argb: "FF000000" }, name: "Arial", size: 10 },
   } as const satisfies CellStyle,
 
   /** Green font — financial-model convention for cross-sheet links */
   linkCell: {
-    font: { color: "FF008000", name: "Arial", size: 10 },
+    font: { color: { argb: "FF008000" }, name: "Arial", size: 10 },
   } as const satisfies CellStyle,
 } as const;

@@ -68,15 +68,27 @@ export type Fill = SolidFill | GradientFill;
 
 // ─── Font ────────────────────────────────────────────────────────────────────
 
+export interface Color {
+  argb: string;
+  theme: number;
+}
+
 export interface Font {
   name?: string;
   size?: number;
+  family?: number;
+  scheme?: "minor" | "major" | "none";
+  charset?: number;
+  color?: string | Partial<Color>;
   bold?: boolean;
   italic?: boolean;
-  underline?: boolean | "single" | "double" | "singleAccounting" | "doubleAccounting";
-  strike?: boolean;
-  color?: string; // hex ARGB
+  underline?: boolean | "none" | "single" | "double" | "singleAccounting" | "doubleAccounting";
   vertAlign?: "superscript" | "subscript";
+  strike?: boolean;
+  outline?: boolean;
+  condense?: boolean;
+  extend?: boolean;
+  shadow?: boolean;
 }
 
 // ─── Number Format ───────────────────────────────────────────────────────────
@@ -254,6 +266,25 @@ export interface WriteResult {
   /** Approximate file size in bytes (-1 when streaming, size reported after flush) */
   sizeBytes: number;
 }
+
+// ─── Comment / Note Types ────────────────────────────────────────────────────
+
+export interface NoteText {
+  text: string;
+  font?: Partial<Font>;
+}
+
+export interface NoteConfig {
+  texts?: NoteText[];
+  margins?: { insetmode?: string; inset?: number[] };
+  protection?: { locked?: string; lockText?: string };
+  editAs?: string;
+  anchor?: string;
+}
+
+export type ThreadedComment = import("@cj-tech-master/excelts").ThreadedComment;
+export type ThreadedCommentPerson = import("@cj-tech-master/excelts").ThreadedCommentPerson;
+export type ThreadedCommentMention = import("@cj-tech-master/excelts").ThreadedCommentMention;
 
 // ─── Cell Value Types (re-exported from excelts) ─────────────────────────────
 

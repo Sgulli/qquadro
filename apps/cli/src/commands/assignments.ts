@@ -19,14 +19,14 @@ import {
 } from "../data/mock-data.js";
 
 const darkHeader = style(
-  { font: { bold: true, size: 11, color: "FFFFFFFF", name: "Arial" } },
+  { font: { bold: true, size: 11, color: { argb: "FFFFFFFF" }, name: "Arial" } },
   { fill: { type: "solid", color: "FF2B579A" } },
   align.centerWrap,
   border.thinBlack,
 );
 
 const subHeader = style(
-  { font: { bold: true, size: 10, color: "FF1F497D", name: "Arial" } },
+  { font: { bold: true, size: 10, color: { argb: "FF1F497D" }, name: "Arial" } },
   { fill: { type: "solid", color: "FFDCE6F1" } },
   align.centerWrap,
   border.thinBlack,

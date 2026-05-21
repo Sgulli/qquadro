@@ -331,7 +331,7 @@ describe("factory wrappers", () => {
 describe("Styles presets", () => {
   it("header has blue fill and white font", () => {
     expect(Styles.header.fill).toEqual({ type: "solid", color: "FF2B579A" });
-    expect(Styles.header.font).toMatchObject({ bold: true, color: "FFFFFFFF" });
+    expect(Styles.header.font).toMatchObject({ bold: true, color: { argb: "FFFFFFFF" } });
   });
 
   it("totalRow has yellow fill and double bottom border", () => {
@@ -363,14 +363,14 @@ describe("Styles presets", () => {
 
 describe("applyStyle", () => {
   it("does nothing for undefined style", () => {
-    const cell = { font: {} } as any;
-    applyStyle(cell, undefined);
+    const cell = { font: {} } as Record<string, unknown>;
+    applyStyle(cell as never, undefined);
     expect(cell.font).toEqual({});
   });
 
   it("applies font, fill, border, alignment, numberFormat, protection", () => {
-    const cell: any = {};
-    applyStyle(cell, {
+    const cell: Record<string, unknown> = {};
+    applyStyle(cell as never, {
       font: { bold: true },
       fill: { type: "solid", color: "FFFFFF" },
       border: { top: { style: "thin" } },
@@ -387,8 +387,8 @@ describe("applyStyle", () => {
   });
 
   it("skips undefined style sub-objects", () => {
-    const cell: any = {};
-    applyStyle(cell, {});
+    const cell: Record<string, unknown> = {};
+    applyStyle(cell as never, {});
     expect(cell.font).toBeUndefined();
   });
 });
