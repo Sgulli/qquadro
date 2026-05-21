@@ -1,6 +1,6 @@
 {
   "name": "@qquadro/core",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Fluent, fully-typed Excel builder for Node.js — styles, formulas, merged cells, headers, streaming",
   "type": "module",
   "main": "dist/cjs/index.js",
