@@ -779,7 +779,8 @@ export class SheetBuilder {
       if (options.hidden) excelRow.hidden = true;
       if (options.outlineLevel !== undefined) excelRow.outlineLevel = options.outlineLevel;
       if (options.style) {
-        excelRow.eachCell({ includeEmpty: true }, (cell) => applyStyle(cell, options.style!));
+        const s = options.style;
+        excelRow.eachCell({ includeEmpty: true }, (cell) => applyStyle(cell, s));
       }
     }
 

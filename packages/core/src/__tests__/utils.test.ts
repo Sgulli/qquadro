@@ -255,11 +255,11 @@ describe("style()", () => {
 
 describe("border presets", () => {
   it("thinBlack has thin black on all four sides", () => {
-    const b = border.thinBlack.border!;
-    expect(b.top).toEqual({ style: "thin", color: "FF000000" });
-    expect(b.bottom).toEqual(b.top);
-    expect(b.left).toEqual(b.top);
-    expect(b.right).toEqual(b.top);
+    const b = border.thinBlack.border;
+    expect(b?.top).toEqual({ style: "thin", color: "FF000000" });
+    expect(b?.bottom).toEqual(b?.top);
+    expect(b?.left).toEqual(b?.top);
+    expect(b?.right).toEqual(b?.top);
   });
 
   it("thinGrey uses grey color", () => {
@@ -271,15 +271,15 @@ describe("border presets", () => {
   });
 
   it("thin() factory creates custom color", () => {
-    const b = border.thin("FF00FF00").border!;
-    expect(b.top?.color).toBe("FF00FF00");
-    expect(b.top?.style).toBe("thin");
+    const b = border.thin("FF00FF00").border;
+    expect(b?.top?.color).toBe("FF00FF00");
+    expect(b?.top?.style).toBe("thin");
   });
 
   it("all() factory creates custom style + color", () => {
-    const b = border.all("dashed", "FF0000FF").border!;
-    expect(b.top?.style).toBe("dashed");
-    expect(b.top?.color).toBe("FF0000FF");
+    const b = border.all("dashed", "FF0000FF").border;
+    expect(b?.top?.style).toBe("dashed");
+    expect(b?.top?.color).toBe("FF0000FF");
   });
 });
 
