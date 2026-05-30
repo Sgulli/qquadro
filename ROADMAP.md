@@ -56,17 +56,17 @@
 - [x] Ignored errors (suppress green triangles)
 - [x] External workbook references
 
-## v0.6 — Formula Expansion
+## v0.6 — Formula Expansion ✅ (2026-05-30)
 
-- [ ] Lookup & reference: VLOOKUP, HLOOKUP, INDEX, MATCH, XLOOKUP, OFFSET, INDIRECT
-- [ ] Conditional logic: AND, OR, NOT, SWITCH, IFS, IFERROR, IFNA
-- [ ] Math: ROUND, ROUNDUP, ROUNDDOWN, ABS, TRUNC, INT, MOD, CEILING, FLOOR, POWER, SQRT
-- [ ] Text: CONCAT, TEXT, LEFT, RIGHT, MID, LEN, TRIM, UPPER, LOWER, PROPER
-- [ ] Aggregate: SUMIF, SUMIFS, COUNTIF, COUNTIFS, AVERAGEIF, AVERAGEIFS, SUBTOTAL
-- [ ] Date: NOW, TODAY, DATE, YEAR, MONTH, DAY, EOMONTH, NETWORKDAYS
-- [ ] Info: ISNUMBER, ISTEXT, ISBLANK, ISERROR
-- [ ] Rank: RANK, LARGE, SMALL
-- [ ] Array formulas (FILTER, SORT, UNIQUE, CSE)
+- [x] Lookup & reference: VLOOKUP, HLOOKUP, INDEX, MATCH, XLOOKUP, OFFSET, INDIRECT
+- [x] Conditional logic: AND, OR, NOT, SWITCH, IFS, IFERROR, IFNA
+- [x] Math: ROUND, ROUNDUP, ROUNDDOWN, ABS, TRUNC, INT, MOD, CEILING, FLOOR, POWER, SQRT
+- [x] Text: CONCAT, TEXT, LEFT, RIGHT, MID, LEN, TRIM, UPPER, LOWER, PROPER
+- [x] Aggregate: SUMIF, SUMIFS, COUNTIF, COUNTIFS, AVERAGEIF, AVERAGEIFS, SUBTOTAL
+- [x] Date: NOW, TODAY, DATE, YEAR, MONTH, DAY, EOMONTH, NETWORKDAYS
+- [x] Info: ISNUMBER, ISTEXT, ISBLANK, ISERROR
+- [x] Rank: RANK, LARGE, SMALL
+- [x] Array formulas (FILTER, SORT, UNIQUE, CSE)
 
 ## v0.7 — Performance & Polish
 
