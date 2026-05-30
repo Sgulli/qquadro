@@ -485,6 +485,15 @@ export class SheetBuilder {
       cell.value = value;
     }
   }
+
+  fillFormula(refStr: string, formula: string): this {
+    (this._ws.getCell(refStr) as { value: { formula: string } }).value = { formula };
+    return this;
+  }
+
+  fillFormulaRC(col: number, row: number, formula: string): this {
+    return this.fillFormula(`${colLetter(col)}${row}`, formula);
+  }
 }
 
 const proto = SheetBuilder.prototype as unknown as SheetBuilderExtension;

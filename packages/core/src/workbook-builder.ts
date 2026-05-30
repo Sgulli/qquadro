@@ -229,6 +229,78 @@ export class WorkbookBuilder {
     return this._wb.externalLinks;
   }
 
+  /** Trigger full formula recalculation on next open in Excel. */
+  calculate(): this {
+    this._wb.calcProperties.fullCalcOnLoad = true;
+    return this;
+  }
+
+  /** Register a custom function (UDF) for use in formulas. */
+  registerFunction(name: string, fn: (...args: unknown[]) => unknown): this {
+    const map = this._wb.userFunctions as
+      | Map<string, { invoke: (...args: unknown[]) => unknown }>
+      | undefined;
+    if (map) map.set(name, { invoke: fn });
+    return this;
+  }
+
+  /** Import a markdown table string as a new sheet. */
+  addSheetFromMarkdown(markdown: string, sheetName: string): this {
+    const lines = markdown.split("\n").filter((l) => l.trim());
+    if (lines.length < 2) return this;
+
+    const headers = lines[0]
+      .split("|")
+      .map((h) => h.trim())
+      .filter(Boolean);
+    const dataRows = lines.slice(2);
+
+    this.addSheet({ name: sheetName }, (sheet) => {
+      sheet.headers(headers.map((h) => ({ key: h.toLowerCase().replace(/\s+/g, "_"), header: h })));
+      for (const row of dataRows) {
+        const vals = row
+          .split("|")
+          .map((c) => c.trim())
+          .filter(Boolean);
+        if (vals.length === 0) continue;
+        const obj: Record<string, string> = {};
+        for (let i = 0; i < Math.min(vals.length, headers.length); i++) {
+          obj[headers[i].toLowerCase().replace(/\s+/g, "_")] = vals[i];
+        }
+        sheet.addRow(obj);
+      }
+    });
+    return this;
+  }
+
+  /** Export first sheet as a markdown table. */
+  async toMarkdown(sheetIndex = 0): Promise<string> {
+    const sheet = this._sheets[sheetIndex];
+    if (!sheet) return "";
+
+    const allRows: string[][] = [];
+    sheet.eachRow((row, _rowNumber) => {
+      const vals: string[] = [];
+      row.eachCell({ includeEmpty: true }, (cell: { value: unknown }) => {
+        vals.push(String(cell.value ?? ""));
+      });
+      allRows.push(vals);
+    });
+
+    if (allRows.length === 0) return "";
+
+    const colCount = Math.max(...allRows.map((r) => r.length));
+    const colWidths = Array.from({ length: colCount }, (_, ci) =>
+      Math.max(...allRows.map((r) => (r[ci] ?? "").length), 3),
+    );
+
+    const fmt = (row: string[]) => `| ${row.map((v, ci) => v.padEnd(colWidths[ci])).join(" | ")} |`;
+
+    const sep = `| ${colWidths.map((w) => "-".repeat(w)).join(" | ")} |`;
+
+    return [fmt(allRows[0]), sep, ...allRows.slice(1).map(fmt)].join("\n");
+  }
+
   private async _finalizeAll(): Promise<void> {
     const results = await Promise.allSettled(this._sheets.map((s) => _sheetFinalizers.get(s)?.()));
     const errors = results

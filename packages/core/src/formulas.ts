@@ -12,15 +12,6 @@ function esc(v: string | number): string {
   return typeof v === "string" ? `"${v.replace(/"/g, '""')}"` : String(v);
 }
 
-function isCellRef(v: string): boolean {
-  return /^[A-Z]{1,3}\d+(:[A-Z]{1,3}\d+)?$/i.test(v);
-}
-
-function smartEsc(v: string | number): string {
-  if (typeof v === "number") return String(v);
-  return isCellRef(v) ? v : esc(v);
-}
-
 export function ref(col: Ref, row: number): string {
   return `${resolveCol(col)}${row}`;
 }
@@ -85,8 +76,6 @@ export function ifExpr(
   return { formula: `IF(${condition},${thenVal},${elseVal})` };
 }
 
-// ─── Lookup & Reference ────────────────────────────────────────────────────────
-
 export function vlookup(
   lookupValue: string | number,
   tableArray: string,
@@ -94,7 +83,7 @@ export function vlookup(
   rangeLookup = false,
 ): FormulaValue {
   return {
-    formula: `VLOOKUP(${esc(lookupValue)},${tableArray},${colIndex},${rangeLookup.toString().toUpperCase()})`,
+    formula: `VLOOKUP(${esc(lookupValue)},${tableArray},${colIndex},${String(rangeLookup)})`,
   };
 }
 
@@ -105,7 +94,7 @@ export function hlookup(
   rangeLookup = false,
 ): FormulaValue {
   return {
-    formula: `HLOOKUP(${esc(lookupValue)},${tableArray},${rowIndex},${rangeLookup.toString().toUpperCase()})`,
+    formula: `HLOOKUP(${esc(lookupValue)},${tableArray},${rowIndex},${String(rangeLookup)})`,
   };
 }
 
@@ -118,7 +107,7 @@ export function match(
   lookupArray: string,
   matchType = 0,
 ): FormulaValue {
-  return { formula: `MATCH(${smartEsc(lookupValue)},${lookupArray},${matchType})` };
+  return { formula: `MATCH(${esc(lookupValue)},${lookupArray},${matchType})` };
 }
 
 export function xlookup(
@@ -127,12 +116,10 @@ export function xlookup(
   returnArray: string,
   ifNotFound?: string,
   matchMode = 0,
-  searchMode = 1,
 ): FormulaValue {
-  const args = [smartEsc(lookupValue), lookupArray, returnArray];
+  const args = [esc(lookupValue), lookupArray, returnArray];
   if (ifNotFound !== undefined) args.push(esc(ifNotFound));
   if (matchMode !== 0) args.push(String(matchMode));
-  if (searchMode !== 1) args.push(String(searchMode));
   return { formula: `XLOOKUP(${args.join(",")})` };
 }
 
@@ -153,8 +140,6 @@ export function indirect(refText: string): FormulaValue {
   return { formula: `INDIRECT(${esc(refText)})` };
 }
 
-// ─── Conditional Logic ─────────────────────────────────────────────────────────
-
 export function and(...conditions: string[]): FormulaValue {
   return { formula: `AND(${conditions.join(",")})` };
 }
@@ -168,8 +153,7 @@ export function not(condition: string): FormulaValue {
 }
 
 export function switchExpr(expression: string, ...cases: (string | number)[]): FormulaValue {
-  const args = [expression, ...cases.map(esc)];
-  return { formula: `SWITCH(${args.join(",")})` };
+  return { formula: `SWITCH(${[expression, ...cases.map(esc)].join(",")})` };
 }
 
 export function ifs(...conditions: string[]): FormulaValue {
@@ -183,8 +167,6 @@ export function iferror(value: string | number, valueIfError: string | number): 
 export function ifna(value: string | number, valueIfNA: string | number): FormulaValue {
   return { formula: `IFNA(${value},${esc(valueIfNA)})` };
 }
-
-// ─── Math ──────────────────────────────────────────────────────────────────────
 
 export function round(number: string | number, digits = 0): FormulaValue {
   return { formula: `ROUND(${number},${digits})` };
@@ -230,49 +212,45 @@ export function sqrt(number: string | number): FormulaValue {
   return { formula: `SQRT(${number})` };
 }
 
-// ─── Text ──────────────────────────────────────────────────────────────────────
-
 export function concat(...texts: (string | number)[]): FormulaValue {
-  return { formula: `CONCAT(${texts.map(smartEsc).join(",")})` };
+  return { formula: `CONCAT(${texts.map(esc).join(",")})` };
 }
 
 export function text(value: string | number, format: string): FormulaValue {
-  return { formula: `TEXT(${smartEsc(value)},${esc(format)})` };
+  return { formula: `TEXT(${esc(value)},${esc(format)})` };
 }
 
 export function left(text: string | number, chars = 1): FormulaValue {
-  return { formula: `LEFT(${smartEsc(text)},${chars})` };
+  return { formula: `LEFT(${esc(text)},${chars})` };
 }
 
 export function right(text: string | number, chars = 1): FormulaValue {
-  return { formula: `RIGHT(${smartEsc(text)},${chars})` };
+  return { formula: `RIGHT(${esc(text)},${chars})` };
 }
 
 export function mid(text: string | number, start: number, chars: number): FormulaValue {
-  return { formula: `MID(${smartEsc(text)},${start},${chars})` };
+  return { formula: `MID(${esc(text)},${start},${chars})` };
 }
 
 export function len(text: string | number): FormulaValue {
-  return { formula: `LEN(${smartEsc(text)})` };
+  return { formula: `LEN(${esc(text)})` };
 }
 
 export function trim(text: string | number): FormulaValue {
-  return { formula: `TRIM(${smartEsc(text)})` };
+  return { formula: `TRIM(${esc(text)})` };
 }
 
 export function upper(text: string | number): FormulaValue {
-  return { formula: `UPPER(${smartEsc(text)})` };
+  return { formula: `UPPER(${esc(text)})` };
 }
 
 export function lower(text: string | number): FormulaValue {
-  return { formula: `LOWER(${smartEsc(text)})` };
+  return { formula: `LOWER(${esc(text)})` };
 }
 
 export function proper(text: string | number): FormulaValue {
-  return { formula: `PROPER(${smartEsc(text)})` };
+  return { formula: `PROPER(${esc(text)})` };
 }
-
-// ─── Aggregate ─────────────────────────────────────────────────────────────────
 
 export function sumif(range: string, criteria: string | number, sumRange?: string): FormulaValue {
   return {
@@ -289,9 +267,7 @@ export function sumifs(
   ...more: (string | number)[]
 ): FormulaValue {
   const args = [sumRange, criteriaRange1, esc(criteria1)];
-  for (let i = 0; i < more.length; i++) {
-    args.push(i % 2 === 0 ? String(more[i]) : esc(more[i]));
-  }
+  for (let i = 0; i < more.length; i++) args.push(i % 2 === 0 ? String(more[i]) : esc(more[i]));
   return { formula: `SUMIFS(${args.join(",")})` };
 }
 
@@ -305,9 +281,7 @@ export function countifs(
   ...more: (string | number)[]
 ): FormulaValue {
   const args = [criteriaRange1, esc(criteria1)];
-  for (let i = 0; i < more.length; i++) {
-    args.push(i % 2 === 0 ? String(more[i]) : esc(more[i]));
-  }
+  for (let i = 0; i < more.length; i++) args.push(i % 2 === 0 ? String(more[i]) : esc(more[i]));
   return { formula: `COUNTIFS(${args.join(",")})` };
 }
 
@@ -330,17 +304,13 @@ export function averageifs(
   ...more: (string | number)[]
 ): FormulaValue {
   const args = [averageRange, criteriaRange1, esc(criteria1)];
-  for (let i = 0; i < more.length; i++) {
-    args.push(i % 2 === 0 ? String(more[i]) : esc(more[i]));
-  }
+  for (let i = 0; i < more.length; i++) args.push(i % 2 === 0 ? String(more[i]) : esc(more[i]));
   return { formula: `AVERAGEIFS(${args.join(",")})` };
 }
 
 export function subtotal(functionNum: number, ref1: string, ...refs: string[]): FormulaValue {
   return { formula: `SUBTOTAL(${functionNum},${[ref1, ...refs].join(",")})` };
 }
-
-// ─── Date ──────────────────────────────────────────────────────────────────────
 
 export function now(): FormulaValue {
   return { formula: "NOW()" };
@@ -382,8 +352,6 @@ export function networkdays(
   };
 }
 
-// ─── Info ──────────────────────────────────────────────────────────────────────
-
 export function isnumber(value: string | number): FormulaValue {
   return { formula: `ISNUMBER(${value})` };
 }
@@ -400,8 +368,6 @@ export function iserror(value: string | number): FormulaValue {
   return { formula: `ISERROR(${value})` };
 }
 
-// ─── Rank ──────────────────────────────────────────────────────────────────────
-
 export function rank(number: string | number, ref: string, order = 0): FormulaValue {
   return { formula: `RANK(${number},${ref},${order})` };
 }
@@ -414,8 +380,6 @@ export function small(array: string, k: number): FormulaValue {
   return { formula: `SMALL(${array},${k})` };
 }
 
-// ─── Array Formulas ────────────────────────────────────────────────────────────
-
 export function filter(array: string, include: string, ifEmpty?: string): FormulaValue {
   return {
     formula: ifEmpty
@@ -424,29 +388,20 @@ export function filter(array: string, include: string, ifEmpty?: string): Formul
   };
 }
 
-export function sort(array: string, sortBy?: number, sortOrder = 1, byCol = false): FormulaValue {
+export function sort(array: string, sortBy?: number, sortOrder = 1): FormulaValue {
   const args = [array];
   if (sortBy !== undefined) args.push(String(sortBy));
   if (sortOrder !== 1) args.push(String(sortOrder));
-  if (byCol) args.push("TRUE");
   return { formula: `SORT(${args.join(",")})` };
 }
 
-export function unique(array: string, byCol = false, exactlyOnce = false): FormulaValue {
-  const args = [array];
-  if (byCol) args.push("TRUE");
-  if (exactlyOnce) {
-    if (!byCol) args.push("FALSE");
-    args.push("TRUE");
-  }
-  return { formula: `UNIQUE(${args.join(",")})` };
+export function unique(array: string, byCol = false): FormulaValue {
+  return byCol ? { formula: `UNIQUE(${array},TRUE)` } : { formula: `UNIQUE(${array})` };
 }
 
 export function cse(formulaStr: string): FormulaValue {
   return { formula: `{${formulaStr}}` };
 }
-
-// ─── Cell value conversion helpers ─────────────────────────────────────────────
 
 export function isFormula(val: CellValue): val is FormulaValue {
   return val !== null && typeof val === "object" && !(val instanceof Date);

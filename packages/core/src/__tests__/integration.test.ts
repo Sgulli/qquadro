@@ -327,4 +327,42 @@ describe("integration tests (write + read-back verification)", () => {
     expect(keepSheet?.worksheet.getCell("A1").value).toBe("Keep me");
     expect(loaded.getSheet("Remove")).toBeUndefined();
   });
+
+  it("fillFormula writes shared formula", async () => {
+    const outputFile = outputPath("fill-formula.xlsx");
+    await new WorkbookBuilder({ author: "v0.7 Test" })
+      .addSheet({ name: "Data" }, (sheet) => {
+        sheet.headers([
+          { key: "x", header: "X", width: 10 },
+          { key: "y", header: "Y", width: 10 },
+          { key: "sum", header: "Sum", width: 10 },
+        ]);
+        sheet.addRows([
+          { x: 1, y: 2 },
+          { x: 3, y: 4 },
+        ]);
+        sheet.fillFormula("C2", "A2+B2");
+        sheet.fillFormula("C3", "A3+B3");
+      })
+      .write(outputFile);
+
+    const loaded = await WorkbookBuilder.load(outputFile);
+    const ws = loaded.getSheet("Data")!.worksheet;
+    expect((ws.getCell("C2") as { value: { formula?: string } }).value?.formula ?? "").toBeTruthy();
+  });
+
+  it("markdown import/export round-trips", async () => {
+    const md = "| Name  | Age |\n|-------|-----|\n| Alice | 30  |\n| Bob   | 25  |";
+    const outputFile = outputPath("markdown.xlsx");
+
+    await new WorkbookBuilder({ author: "Markdown" })
+      .addSheetFromMarkdown(md, "Sheet1")
+      .write(outputFile);
+
+    const loaded = await WorkbookBuilder.load(outputFile);
+    const result = await loaded.toMarkdown();
+    expect(result).toContain("Name");
+    expect(result).toContain("Alice");
+    expect(result).toContain("Bob");
+  });
 });

@@ -68,15 +68,15 @@
 - [x] Rank: RANK, LARGE, SMALL
 - [x] Array formulas (FILTER, SORT, UNIQUE, CSE)
 
-## v0.7 — Performance & Polish
+## v0.7 — Performance & Polish ✅ (2026-05-30)
 
-- [ ] Reactive formula calculation (`workbook.calculate()` via excelts 433-function engine)
-- [ ] Custom function registration (user-defined UDFs)
+- [x] Reactive formula calculation (`workbook.calculate()` via excelts 433-function engine)
+- [x] Custom function registration (user-defined UDFs via `registerFunction()`)
 - [ ] Async row streaming (`WorkbookWriter` — event-based, low memory)
-- [ ] Shared formulas (efficient formula replication via `fillFormula()`)
+- [x] Shared formulas (efficient formula replication via `fillFormula()`)
 - [ ] Browser support (generate XLSX in-browser without Node.js)
 - [ ] PDF export from Excel
-- [ ] Markdown table import/export
+- [x] Markdown table import/export
 
 ## v0.8 — DX & Design Improvements
 
