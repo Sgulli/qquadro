@@ -36,6 +36,8 @@
 
 export type { ColumnMap, ColumnSchema, ColumnSchemaMap } from "./column-map.js";
 export { ColumnRef, createColumnMap } from "./column-map.js";
+export type { DefinedSheet } from "./define-sheet.js";
+export { defineSheet } from "./define-sheet.js";
 export { RangeBuilder } from "./range-builder.js";
 export { SheetBuilder } from "./sheet-builder.js";
 export { WorkbookBuilder } from "./workbook-builder.js";
@@ -121,6 +123,33 @@ export type {
   WorkbookOptions,
   WriteResult,
 } from "./types.js";
+
+// ── Schema types ──────────────────────────────────────────────────────────────
+
+export type {
+  BooleanField,
+  CurrencyField,
+  DateField,
+  EnumField,
+  InferRowType,
+  NumberField,
+  PercentField,
+  SchemaDefinition,
+  SchemaField,
+  TextField,
+} from "./schema.js";
+export {
+  booleanField,
+  currencyField,
+  dateField,
+  enumType,
+  numberField,
+  percentField,
+  Schema,
+  schemaToColumnDefs,
+  text,
+  validateRow,
+} from "./schema.js";
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
