@@ -48,6 +48,8 @@ Requires Node 18+.
 ## Features
 
 - **Fluent API** — chainable `.headers()`, `.addRow()`, `.merge()`, `.freeze()`, etc.
+- **Schema-first sheets** — `defineSheet()` with typed `Schema.*` field builders, auto-columns, validated rows
+- **Fluent Range API** — `sheet.range().style().validation().dataBar().iconSet().merge()` — one chain for any range operation
 - **Numeric tuple API** — reference cells by `[col, row]` tuples, no A1 strings
 - **Data validation** — dropdown lists, number/date ranges, custom formulas
 - **Conditional formatting** — cell rules, data bars, color scales, icon sets, top N
@@ -57,9 +59,13 @@ Requires Node 18+.
 - **CSV import/export** — read/write CSV to files or strings
 - **Sheet-to-JSON** — convert worksheet data to objects or arrays
 - **Formulas** — typed helpers (`F.sum()`, `F.pct()`, `F.add()`, etc.) or raw `{ formula: "..." }`
+- **Formula AST** — composable `Expr` / `Formula` nodes for programmatic formula construction
 - **Styles** — presets (`Styles.header`, `Styles.currency`, `Styles.totalRow`) or composable custom
+- **ColumnMap** — typed column references with `.letter()`, `.index()`, `.range()`, `.cell()` helpers
+- **Range namespace** — `Range.cell()`, `Range.column()`, `Range.rect()`, `Range.offset()`, `Range.expand()`
 - **Merged cells** — `.merge()` with value, style & height in one call
 - **Freeze panes** + **auto-filter**
+- **Sparklines** — `sheet.addSparklineGroup()` for inline data visualization
 - **Streaming** — constant memory for large files via `useStreaming` option
 - **ESM + CJS** — dual package with exports map
 - **TypeScript** — full type declarations
@@ -206,6 +212,61 @@ const csvFileWb = await WorkbookBuilder.fromCsvFile("./data.csv");
 ```ts
 const wb = new WorkbookBuilder({ useStreaming: true });
 // add rows — memory usage stays constant
+```
+
+### Schema-First Sheets
+
+Define a typed schema once — get auto-generated headers, column widths, and runtime validation:
+
+```ts
+import { WorkbookBuilder, defineSheet, Schema } from "@qquadro/core";
+
+const wb = new WorkbookBuilder({ author: "Acme Corp" });
+
+const { sheet, columns } = defineSheet(wb, "Employees", {
+  name: Schema.text({ width: 25 }),
+  age: Schema.number({ min: 18, max: 99, width: 10 }),
+  department: Schema.enum(["Engineering", "Sales", "HR"] as const),
+  salary: Schema.currency({ width: 18 }),
+  active: Schema.boolean(),
+});
+
+// addRows() validates at runtime — wrong types throw
+sheet.range(columns.salary.range()).dataBar({ argb: "FF5B9BD5" });
+```
+
+`columns.name.letter()` → `"A"`, `columns.salary.index()` → `4`, `columns.age.range()` → `"B2:B{rowCount}"`.
+
+### Fluent Range API
+
+Chain range operations without repeating the range reference:
+
+```ts
+sheet
+  .range("A2:C10")
+  .style({ font: { bold: true } })
+  .validation({ type: "whole", operator: "between", formulae: [1, 100] })
+  .dataBar({ argb: "FF5B9BD5" })
+  .iconSet("3TrafficLights1")
+  .containsText("urgent", "containsText", { font: { color: { argb: "FFFF0000" } } });
+```
+
+Valid on any A1 string, `[col, row]` tuple, or `columns.key.range()`.
+
+### Range Helpers
+
+```ts
+import { Range, col, row } from "@qquadro/core";
+
+Range.cell("A", 1)              // → "A1"
+Range.column("B", 2, 10)        // → "B2:B10"
+Range.rect(1, 1, 4, 10)         // → "A1:D10"
+Range.fromTuple([1, 1, 4, 10])  // → "A1:D10"
+Range.offset("A1", 2, 3)        // → "D3"
+Range.expand("A1", 5, 3)        // → "A1:D5"
+
+col(1)                          // → "A"  (number to letter)
+row(5)                          // → 5    (pass-through for readability)
 ```
 
 ### Adding Data from JSON

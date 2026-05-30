@@ -29,17 +29,105 @@ await new WorkbookBuilder({ author: "Acme Corp" })
 ## Features
 
 - **Fluent API** — chainable `addSheet` → `headers` → `addRows` → `write`
+- **Schema-first sheets** — `defineSheet()` with typed `Schema.*` field builders, auto-columns, validated rows
+- **Fluent Range API** — `sheet.range().style().validation().dataBar().iconSet().merge()`
 - **Full styling** — fonts, fills, borders, alignment, number formats with preset styles
 - **Formulas** — typed helpers for SUM, AVERAGE, IF, ADD, PCT, and more
+- **Formula AST** — composable `Expr` / `Formula` nodes for programmatic formula construction
 - **Data validation** — dropdown lists, number/date ranges, custom rules
 - **Conditional formatting** — cell rules, data bars, color scales, icon sets, top N
 - **Numeric tuple API** — reference cells by `[col, row]` tuples, not A1 strings
+- **ColumnMap** — typed column references with `.letter()`, `.index()`, `.range()`, `.cell()`
+- **Range namespace** — `Range.cell()`, `Range.column()`, `Range.rect()`, `Range.offset()`, `Range.expand()`
 - **Merged cells** — merge ranges with value and style
 - **Freeze panes & auto-filter** — header rows stay visible, one-liner filter
+- **Sparklines** — inline data visualization via `addSparklineGroup()`
 - **Headers & footers** — per-sheet odd/even header/footer sections
 - **Page setup** — orientation, paper size, fit-to-page, margins
 - **Streaming mode** — constant memory for large datasets
 - **Dual ESM/CJS** — works with `import` and `require`
+
+## Schema-First Sheets
+
+Define a typed schema once — get auto-generated headers, column widths, default styles, and runtime validation:
+
+```ts
+import { WorkbookBuilder, defineSheet, Schema } from "@qquadro/core";
+
+const wb = new WorkbookBuilder({ author: "Acme Corp" });
+
+const { sheet, columns } = defineSheet(wb, "Employees", {
+  name: Schema.text({ width: 25 }),
+  age: Schema.number({ min: 18, max: 99 }),
+  department: Schema.enum(["Engineering", "Sales", "HR"] as const),
+  salary: Schema.currency({ symbol: "$" }),
+  active: Schema.boolean(),
+});
+
+// Typed addRows — TypeScript catches wrong types at compile time
+sheet.range(columns.salary.range()).dataBar({ argb: "FF5B9BD5" });
+
+await wb.write("./employees.xlsx");
+```
+
+### Schema Field Types
+
+| Builder | TS Type | Features |
+|---------|---------|----------|
+| `Schema.text(opts?)` | `string` | `width`, `maxLength`, `style` |
+| `Schema.number(opts?)` | `number` | `min`, `max`, `decimals`, `format` |
+| `Schema.date(opts?)` | `Date \| string` | `format`, `style` |
+| `Schema.boolean(opts?)` | `boolean` | `width`, `style` |
+| `Schema.enum(values, opts?)` | union of values | `width` auto-calculated, runtime validation |
+| `Schema.currency(opts?)` | `number` | `symbol`, `format`, auto-style |
+| `Schema.percent(opts?)` | `number` | `format`, auto-style |
+
+### Without Headers
+
+```ts
+defineSheet(wb, "Data", schema, { writeHeaders: false });
+```
+
+## Fluent Range API
+
+Chain operations on a range without repeating the address:
+
+```ts
+sheet
+  .range("A2:C10")
+  .style({ font: { bold: true } })
+  .dataBar({ argb: "FF5B9BD5" })
+  .iconSet("3TrafficLights1")
+  .validation({ type: "whole", operator: "between", formulae: [1, 100] })
+  .merge()
+  .formula("A2*1.1");
+
+// Combine with ColumnMap for type-safe ranges:
+sheet
+  .range(columns.salary.range())
+  .cellIs("greaterThan", [100_000], { font: { color: { argb: "FF006100" } } });
+```
+
+### RangeBuilder Methods
+
+| Method | Delegates to |
+|--------|-------------|
+| `.style(s)` | `styleRange()` |
+| `.validation(v)` | `addDataValidation()` |
+| `.listValidation(list)` | `addListValidation()` |
+| `.rangeValidation(v)` | `addRangeValidation()` |
+| `.conditionalFormatting(cf)` | `addConditionalFormatting()` |
+| `.cellIs(op, formulae, s?)` | `addCellIsRule()` |
+| `.expression(formula, s?)` | `addExpressionRule()` |
+| `.dataBar(color?)` | `addDataBar()` |
+| `.colorScale(cfvo, colors?)` | `addColorScale()` |
+| `.iconSet(iconSet?, cfvo?, opts?)` | `addIconSet()` |
+| `.top10(rank, opts?)` | `addTop10Rule()` |
+| `.aboveAverage(opts?)` | `addAboveAverageRule()` |
+| `.containsText(text, op?, s?)` | `addContainsTextRule()` |
+| `.timePeriod(period, s?)` | `addTimePeriodRule()` |
+| `.merge(opts?)` | `merge()` |
+| `.formula(f)` | `fillFormula()` |
 
 ## Data Validation
 
@@ -188,6 +276,39 @@ cellRef(4, 5)              // → "D5"
 colRange(4, 2, 10)         // → "D2:D10"
 rangeRef(4, 2, 7, 10)      // → "D2:G10"
 sheet.columnIndex("score")  // → 2  (1‑based index from headers)
+```
+
+### Range Helpers
+
+Semantic helpers for building range strings without string concatenation:
+
+```ts
+import { Range, col, row } from "@qquadro/core";
+
+// Cell references
+Range.cell("A", 1)              // → "A1"
+Range.cell(1, 5)                // → "A5"   (numeric column)
+
+// Column ranges
+Range.column("B", 2, 10)        // → "B2:B10"
+Range.column(2, 2, 10)          // → "B2:B10"
+Range.fullColumn("B")           // → "B1:B1048576"
+
+// Rectangular ranges
+Range.rect(1, 1, 4, 10)         // → "A1:D10"
+Range.fromTuple([1, 1, 4, 10])  // → "A1:D10"
+
+// Row ranges
+Range.row(5)                     // → "A5:XFD5"
+Range.row(5, 1, 5)              // → "A5:E5"
+
+// Offset and expand
+Range.offset("A1", 2, 3)        // → "D3"   (down 2, right 3)
+Range.expand("A1", 5, 3)        // → "A1:D5" (5 rows, 3 cols)
+
+// Semantic aliases
+col(1)                          // → "A"    (number → letter)
+row(5)                          // → 5      (pass-through for readability)
 ```
 
 ## Installation

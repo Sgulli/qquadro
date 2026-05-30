@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.4.1 (2026-05-30)
+
+- Codebase reorganization: source files and tests moved into subdirectories (`builders/`, `coords/`, `formulas/`, `styles/`, `schema/`, `mixins/`)
+- Removed unsafe casts and inlined import types
+
+## 0.4.0 (2026-05-28)
+
+- Schema-first sheet definitions: `defineSheet()` with typed `Schema.*` field builders (`text`, `number`, `date`, `boolean`, `enum`, `currency`, `percent`)
+- `SchemaDefinition` and `InferRowType<T>` — fully-typed sheet schemas with automatic type inference
+- `validateRow()` — runtime validation with type checks, min/max bounds, enum membership
+- `schemaToColumnDefs()` — convert schema to column definitions with auto-width and default styles
+- `ColumnMap` / `ColumnRef` — typed column references with `.letter()`, `.index()`, `.range()`, `.cell()`, `.toColumnDef()`
+- `createColumnMap()` — build column maps from schema definitions
+- `RangeBuilder` — fluent range operations: `.style()`, `.validation()`, `.cellIs()`, `.dataBar()`, `.iconSet()`, `.top10()`, `.aboveAverage()`, `.containsText()`, `.timePeriod()`, `.expression()`, `.colorScale()`, `.merge()`, `.formula()`
+- `sheet.range()` — entry point for fluent range API on any `SheetBuilder`
+- `Range` namespace — `Range.cell()`, `Range.column()`, `Range.rect()`, `Range.fromTuple()`, `Range.fullColumn()`, `Range.row()`, `Range.offset()`, `Range.expand()`
+- `col()` and `row()` semantic helpers — intuitive range construction
+- `FormulaNode` / `Expr` / `Formula` — typed formula AST for composable formula expressions
+- Exported all chart-related types from `@cj-tech-master/excelts/chart`
+- Exported `ConditionalFormattingOptions`, `ConditionalFormattingRule`, and additional ExcelTS types
+- `SheetBuilder.addSparklineGroup()` — sparkline support
+- `SheetBuilder.setCell()` now directly accepts `[col, row]` tuples
+
 ## 0.3.0 (2026-05-20)
 
 - Data validation: `sheet.addDataValidation()`, `sheet.addListValidation()`, `sheet.addRangeValidation()`
