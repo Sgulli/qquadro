@@ -19,6 +19,7 @@ import { isFormula, toExcelValue, toFormulaValue } from "./formulas.js";
 import { applyChartMixin } from "./mixins/charts.js";
 import { applyConditionalFormattingMixin } from "./mixins/conditional-formatting.js";
 import { applyDataValidationMixin } from "./mixins/data-validation.js";
+import { applyAutoFilter, applyFreeze, applyMerge, applyStyleRange } from "./mixins/format.js";
 import { applyMediaMixin } from "./mixins/media.js";
 import { applyStyle, formatHeaderFooterSection } from "./style-presets.js";
 import type {
@@ -152,16 +153,7 @@ export class SheetBuilder {
   }
 
   styleRange(range: CellRange, style: CellStyle): this {
-    const [tl, br] = resolveRange(range).split(":");
-    if (!tl) return this;
-    const tlCell = this._ws.getCell(tl);
-    const brCell = this._ws.getCell(br ?? tl);
-
-    for (let r = tlCell.fullAddress.row; r <= brCell.fullAddress.row; r++) {
-      for (let c = tlCell.fullAddress.col; c <= brCell.fullAddress.col; c++) {
-        applyStyle(this._ws.getCell(r, c), style);
-      }
-    }
+    applyStyleRange(this._ws, range, style);
     return this;
   }
 
@@ -183,16 +175,7 @@ export class SheetBuilder {
       range = resolveRange(rangeOrRegion as CellRange);
       region = options ?? {};
     }
-    this._ws.mergeCells(range);
-
-    const [tl] = range.split(":");
-    if (!tl) return this;
-
-    const cell = this._ws.getCell(tl);
-    if (region.value) this._writeValue(cell, region.value);
-    if (region.style) applyStyle(cell, region.style);
-    if (region.height) this._ws.getRow(cell.fullAddress.row).height = region.height;
-
+    applyMerge(this._ws, range, region.value, region.style, region.height);
     return this;
   }
 
@@ -221,24 +204,13 @@ export class SheetBuilder {
   freeze(rowOrOpts: number | { row?: number; col?: number }, maybeCol = 0): this {
     const col: number = typeof rowOrOpts === "object" ? (rowOrOpts.col ?? 0) : maybeCol;
     const row: number = typeof rowOrOpts === "object" ? (rowOrOpts.row ?? 0) : rowOrOpts;
-    const prev = this._ws.views?.[0];
-    const { state: _, style: _1, ...rest } = prev ?? {};
-    this._ws.views = [
-      {
-        ...rest,
-        state: "frozen",
-        xSplit: col,
-        ySplit: row,
-        topLeftCell: `${colLetter(col + 1)}${row + 1}`,
-        activeCell: `${colLetter(col + 1)}${row + 1}`,
-      },
-    ];
+    applyFreeze(this._ws, row, col);
     return this;
   }
 
   autoFilter(range?: string): this {
     const r = range ?? (this._columns.length ? `A1:${colLetter(this._columns.length)}1` : "A1");
-    this._ws.autoFilter = r;
+    applyAutoFilter(this._ws, r);
     return this;
   }
 

@@ -563,6 +563,33 @@ export interface SheetBuilderExtension {
   addSparklineGroup(options: AddSparklineGroupOptions): unknown;
   addFormCheckbox(range: FormControlRange, options?: FormCheckboxOptions): unknown;
   getFormCheckboxes(): ExcelFormCheckbox[];
+  // ── Format mixin ─────────────────────────────────────────────────────
+  freeze: (rowOrOpts: number | { row?: number; col?: number }, maybeCol?: number) => unknown;
+  autoFilter: (range?: string) => unknown;
+  autoFitColumns: (startCol?: number | string, endCol?: number | string) => unknown;
+  rowHeight: (rowNumber: number, height: number) => unknown;
+  colWidth: (col: string | number, width: number) => unknown;
+  merge: (
+    rangeOrRegion: string | MergeRange,
+    options?: { value?: CellValue; style?: CellStyle; height?: number },
+  ) => unknown;
+  mergeAll: (regions: MergeRange[]) => unknown;
+  styleRange: (range: CellRange, style: CellStyle) => unknown;
+  clear: () => unknown;
+  // ── Structure mixin ──────────────────────────────────────────────────
+  insertRow: (pos: number, data: unknown[], options?: RowOptions) => unknown;
+  duplicateRow: (rowNum: number, count: number, insert?: boolean) => unknown;
+  removeRow: (start: number, count: number) => unknown;
+  insertColumn: (start: number, count: number, ...inserts: unknown[][]) => unknown;
+  removeColumn: (start: number, count: number) => unknown;
+  addPageBreak: (rowNum: number) => unknown;
+  addColumnPageBreak: (colNum: number) => unknown;
+  // ── Data-io mixin ────────────────────────────────────────────────────
+  eachRow: (callback: (row: unknown, rowNumber: number) => void) => void;
+  toJSON: (opts?: unknown) => unknown;
+  toAOA: () => unknown[][];
+  addJSON: (data: Record<string, unknown>[], opts?: unknown) => unknown;
+  addAOA: (data: unknown[][], opts?: unknown) => unknown;
 }
 
 // ─── External Workbook References ────────────────────────────────────────────
