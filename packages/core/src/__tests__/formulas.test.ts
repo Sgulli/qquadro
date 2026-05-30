@@ -20,8 +20,8 @@ import {
   filter,
   floor,
   hlookup,
-  iferror,
   ifExpr,
+  iferror,
   ifna,
   ifs,
   index,
@@ -309,7 +309,7 @@ describe("conditional logic formulas", () => {
 
 describe("math formulas", () => {
   it("round", () => {
-    expect(round(Math.PI, 2)).toEqual({ formula: "ROUND(3.14159,2)" });
+    expect(round(Math.PI, 2)).toEqual({ formula: "ROUND(3.141592653589793,2)" });
     expect(round("A1")).toEqual({ formula: "ROUND(A1,0)" });
   });
 
