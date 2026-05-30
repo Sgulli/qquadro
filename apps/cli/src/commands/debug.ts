@@ -20,6 +20,16 @@ export function handler(filePath: string): DebugResult {
     throw new Error(`Unsupported file type: "${ext}". Expected .xlsx`);
   }
 
+  const buf = Buffer.alloc(4);
+  const fd = fs.openSync(xlsxPath, "r");
+  fs.readSync(fd, buf, 0, 4, 0);
+  fs.closeSync(fd);
+  if (buf[0] !== 0x50 || buf[1] !== 0x4b || buf[2] !== 0x03 || buf[3] !== 0x04) {
+    throw new Error(
+      `Invalid file: "${filePath}" is not a valid ZIP/XLSX file (missing PK\x03\x04 header).`,
+    );
+  }
+
   const tmp = fs.mkdtempSync(path.join(tmpdir(), "quadro-debug-"));
 
   try {

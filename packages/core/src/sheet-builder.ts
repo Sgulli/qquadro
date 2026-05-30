@@ -19,6 +19,7 @@ import { isFormula, toExcelValue, toFormulaValue } from "./formulas.js";
 import { applyChartMixin } from "./mixins/charts.js";
 import { applyConditionalFormattingMixin } from "./mixins/conditional-formatting.js";
 import { applyDataValidationMixin } from "./mixins/data-validation.js";
+import { applyAutoFilter, applyFreeze, applyMerge, applyStyleRange } from "./mixins/format.js";
 import { applyMediaMixin } from "./mixins/media.js";
 import { applyStyle, formatHeaderFooterSection } from "./style-presets.js";
 import type {
@@ -37,6 +38,7 @@ import type {
 
 export const _sheetFinalizers = new WeakMap<SheetBuilder, () => Promise<void>>();
 
+/** Fluent builder for constructing a single worksheet with column definitions, data rows, and formatting. */
 export class SheetBuilder {
   private readonly _ws: ExcelWorksheet;
 
@@ -46,24 +48,29 @@ export class SheetBuilder {
   private _rowCount = 0;
   private _columnsInferred = false;
 
+  /** Number of data rows written (excluding headers). */
   get rowCount(): number {
     return this._rowCount;
   }
 
+  /** Sheet name. */
   get name(): string {
     return this._opts.name;
   }
 
+  /** Underlying excelts Worksheet instance. */
   get worksheet(): ExcelWorksheet {
     return this._ws;
   }
 
+  /** 1-based index of a column by key. Throws if the key is not found. */
   columnIndex(key: string): number {
     const col = this._columns.find((c) => c.key === key);
     if (!col) throw new Error(`[SheetBuilder] No column with key "${key}".`);
     return this._columns.indexOf(col) + 1;
   }
 
+  /** A1-style range string covering a column across all data rows (e.g. "B2:B10"). */
   columnRange(key: string, startRow?: number): string {
     if (startRow === undefined) startRow = this._headerWritten ? 2 : 1;
     const col = this._columns.find((c) => c.key === key);
@@ -82,27 +89,32 @@ export class SheetBuilder {
     _sheetFinalizers.set(this, () => this._doFinalize());
   }
 
+  /** Set column definitions (replaces any existing columns). */
   columns(defs: ColumnDef[]): this {
     this._columns = defs;
     return this;
   }
 
+  /** Append a single column definition. */
   addColumn(def: ColumnDef): this {
     this._columns.push(def);
     return this;
   }
 
+  /** Set column definitions and write the header row in one call. */
   headers(defs: ColumnDef[], globalStyle?: CellStyle, height?: number): this {
     this._columns = defs;
     this._writeHeaders(globalStyle, height);
     return this;
   }
 
+  /** Append one data row (object or array) to the sheet. */
   addRow(data: RowData, options?: RowOptions): this {
     this._flushRow(data, options);
     return this;
   }
 
+  /** Append multiple data rows with optional per-row overrides or a shared options bag. */
   addRows(rows: RowData[], sharedOptions?: RowOptions): this;
   addRows(rows: Array<{ data: RowData; options?: RowOptions }>): this;
   addRows(
@@ -143,6 +155,7 @@ export class SheetBuilder {
     return this;
   }
 
+  /** Set a cell's value and optional style by address (e.g. "A1" or { col: 1, row: 1 }). */
   setCell(addr: Addr, value?: CellValue, style?: CellStyle): this {
     const address = resolveAddr(addr);
     const cell = this._ws.getCell(address);
@@ -151,20 +164,13 @@ export class SheetBuilder {
     return this;
   }
 
+  /** Apply a style to a range of cells. */
   styleRange(range: CellRange, style: CellStyle): this {
-    const [tl, br] = resolveRange(range).split(":");
-    if (!tl) return this;
-    const tlCell = this._ws.getCell(tl);
-    const brCell = this._ws.getCell(br ?? tl);
-
-    for (let r = tlCell.fullAddress.row; r <= brCell.fullAddress.row; r++) {
-      for (let c = tlCell.fullAddress.col; c <= brCell.fullAddress.col; c++) {
-        applyStyle(this._ws.getCell(r, c), style);
-      }
-    }
+    applyStyleRange(this._ws, range, style);
     return this;
   }
 
+  /** Merge cells over a range, optionally setting a value, style, and row height. */
   merge(
     range: CellRange,
     options?: { value?: CellValue; style?: CellStyle; height?: number },
@@ -183,65 +189,52 @@ export class SheetBuilder {
       range = resolveRange(rangeOrRegion as CellRange);
       region = options ?? {};
     }
-    this._ws.mergeCells(range);
-
-    const [tl] = range.split(":");
-    if (!tl) return this;
-
-    const cell = this._ws.getCell(tl);
-    if (region.value) this._writeValue(cell, region.value);
-    if (region.style) applyStyle(cell, region.style);
-    if (region.height) this._ws.getRow(cell.fullAddress.row).height = region.height;
-
+    applyMerge(this._ws, range, region.value, region.style, region.height);
     return this;
   }
 
+  /** Merge multiple regions in batch. */
   mergeAll(regions: MergeRange[]): this {
     for (const r of regions) this.merge(r);
     return this;
   }
 
+  /** Set the height of a specific row by number. */
   rowHeight(rowNumber: number, height: number): this {
     this._ws.getRow(rowNumber).height = height;
     return this;
   }
 
+  /** Set the width of a column (by letter or index). */
   colWidth(col: string | number, width: number): this {
     this._ws.getColumn(col).width = width;
     return this;
   }
 
+  /** Auto-fit column widths within an optional range. */
   autoFitColumns(startCol?: number | string, endCol?: number | string): this {
     this._ws.autoFitColumns(startCol, endCol);
     return this;
   }
 
+  /** Freeze rows and/or columns at a given split point. */
   freeze(opts: { row?: number; col?: number }): this;
   freeze(row: number, col?: number): this;
   freeze(rowOrOpts: number | { row?: number; col?: number }, maybeCol = 0): this {
     const col: number = typeof rowOrOpts === "object" ? (rowOrOpts.col ?? 0) : maybeCol;
     const row: number = typeof rowOrOpts === "object" ? (rowOrOpts.row ?? 0) : rowOrOpts;
-    const prev = this._ws.views?.[0];
-    const { state: _, style: _1, ...rest } = prev ?? {};
-    this._ws.views = [
-      {
-        ...rest,
-        state: "frozen",
-        xSplit: col,
-        ySplit: row,
-        topLeftCell: `${colLetter(col + 1)}${row + 1}`,
-        activeCell: `${colLetter(col + 1)}${row + 1}`,
-      },
-    ];
+    applyFreeze(this._ws, row, col);
     return this;
   }
 
+  /** Enable auto-filter on the header row (or a custom range). */
   autoFilter(range?: string): this {
     const r = range ?? (this._columns.length ? `A1:${colLetter(this._columns.length)}1` : "A1");
-    this._ws.autoFilter = r;
+    applyAutoFilter(this._ws, r);
     return this;
   }
 
+  /** Add a structured table to the sheet. */
   addTable(
     name: string,
     ref: CellRange,
@@ -265,6 +258,7 @@ export class SheetBuilder {
     return this;
   }
 
+  /** Insert a row at a given position with cell values and optional row-level options. */
   insertRow(pos: number, data: CellValue[], options?: RowOptions): this {
     const excelRow = this._ws.insertRow(pos, data.map(toExcelValue));
     if (options) {
@@ -280,47 +274,56 @@ export class SheetBuilder {
     return this;
   }
 
+  /** Duplicate a row one or more times, optionally inserting rather than appending. */
   duplicateRow(rowNum: number, count: number, insert?: boolean): this {
     this._ws.duplicateRow(rowNum, count, insert);
     this._rowCount += count;
     return this;
   }
 
+  /** Remove a range of contiguous rows by starting index and count. */
   removeRow(start: number, count: number): this {
     this._ws.spliceRows(start, count);
     this._rowCount = Math.max(0, this._rowCount - count);
     return this;
   }
 
+  /** Insert columns at a given position. */
   insertColumn(start: number, count: number, ...inserts: ExcelCellValue[][]): this {
     this._ws.spliceColumns(start, count, ...inserts);
     return this;
   }
 
+  /** Remove a range of columns by starting index and count. */
   removeColumn(start: number, count: number): this {
     this._ws.spliceColumns(start, count);
     return this;
   }
 
+  /** Insert a page break at a specific row number. */
   addPageBreak(rowNum: number): this {
     this._ws.getRow(rowNum).addPageBreak();
     return this;
   }
 
+  /** Insert a page break at a specific column number. */
   addColumnPageBreak(colNum: number): this {
     this._ws.getColumn(colNum).addPageBreak();
     return this;
   }
 
+  /** Add an ignored error entry (e.g. number-stored-as-text) for the given reference. */
   addIgnoredError(ref: string, options?: Omit<IgnoredErrorDef, "ref">): this {
     this._ws.ignoredErrors.push({ ref, ...options });
     return this;
   }
 
+  /** Iterate over every row in the sheet. */
   eachRow(callback: (row: ExcelRow, rowNumber: number) => void): void {
     this._ws.eachRow(callback);
   }
 
+  /** Export sheet data as an array of objects or arrays (delegates to excelts). */
   toJSON(): Record<string, ExcelCellValue>[];
   toJSON(opts: SheetToJSONOptions & { header: 1 }): ExcelCellValue[][];
   toJSON(opts: SheetToJSONOptions & { header: "A" }): Record<string, ExcelCellValue>[];
@@ -329,15 +332,18 @@ export class SheetBuilder {
     return this._ws.toJSON(opts);
   }
 
+  /** Export sheet data as an array-of-arrays. */
   toAOA(): ExcelCellValue[][] {
     return this._ws.toAOA();
   }
 
+  /** Import data from an array of objects (delegates to excelts). */
   addJSON(data: Record<string, ExcelCellValue>[], opts?: AddJSONOptions): this {
     this._ws.addJSON(data, opts);
     return this;
   }
 
+  /** Import data from an array-of-arrays (delegates to excelts). */
   addAOA(data: ExcelCellValue[][], opts?: AddAOAOptions): this {
     this._ws.addAOA(data, opts);
     return this;
@@ -486,11 +492,13 @@ export class SheetBuilder {
     }
   }
 
+  /** Write a formula string into a specific cell by A1 reference. */
   fillFormula(refStr: string, formula: string): this {
     (this._ws.getCell(refStr) as { value: { formula: string } }).value = { formula };
     return this;
   }
 
+  /** Write a formula into a cell by column number and row number (1-based). */
   fillFormulaRC(col: number, row: number, formula: string): this {
     return this.fillFormula(`${colLetter(col)}${row}`, formula);
   }

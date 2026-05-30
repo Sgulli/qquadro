@@ -27,6 +27,7 @@ function normalizeArgb(hex: string): string {
 }
 
 export function color(argb: string): Partial<Color> {
+  normalizeArgb(argb);
   return { argb };
 }
 

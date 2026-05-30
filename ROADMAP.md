@@ -87,11 +87,11 @@
 - [x] `freeze()` preserve existing view state reliably
 - [ ] JSDoc for all public exports
 
-## v1.0 — Ship
+## v1.0 — Ship ✅ (2026-05-30)
 
-- [ ] End-to-end integration tests
-- [ ] Performance benchmarks
-- [ ] 90%+ test coverage
-- [ ] npm publish configuration (`publishConfig`, provenance)
+- [x] End-to-end integration tests
+- [x] Performance benchmarks
+- [x] 90%+ test coverage
+- [x] npm publish configuration (`publishConfig`, provenance)
 - [ ] API documentation site or typedoc
-- [ ] Release checklist
+- [x] Release checklist

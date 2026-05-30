@@ -10,17 +10,20 @@ import { colLetter } from "./coords.js";
 import { _sheetFinalizers, SheetBuilder } from "./sheet-builder.js";
 import type { ExternalLinkInput, SheetOptions, WorkbookOptions, WriteResult } from "./types.js";
 
+/** Fluent Excel workbook builder. Entry point for creating, reading, and modifying XLSX files. */
 export class WorkbookBuilder {
   private _wb: ExcelWorkbook;
   private _opts: WorkbookOptions;
   private _sheets: SheetBuilder[] = [];
 
+  /** @param opts - Workbook metadata, streaming mode, and security options. */
   constructor(opts: WorkbookOptions = {}) {
     this._opts = opts;
     this._wb = new ExcelWorkbook();
     this._applyWorkbookMeta();
   }
 
+  /** Load an existing XLSX file from disk. */
   static async load(filePath: string): Promise<WorkbookBuilder> {
     const resolved = path.resolve(filePath);
     const wb = new ExcelWorkbook();
@@ -28,16 +31,19 @@ export class WorkbookBuilder {
     return WorkbookBuilder._withWb(wb);
   }
 
+  /** Alias for {@link load}. */
   static fromFile(filePath: string): Promise<WorkbookBuilder> {
     return WorkbookBuilder.load(filePath);
   }
 
+  /** Create a workbook from a CSV string or binary data. */
   static async fromCsv(data: string | ArrayBuffer): Promise<WorkbookBuilder> {
     const wb = new ExcelWorkbook();
     await wb.readCsv(data);
     return WorkbookBuilder._withWb(wb);
   }
 
+  /** Create a workbook from a CSV file on disk. */
   static async fromCsvFile(filePath: string): Promise<WorkbookBuilder> {
     const wb = new ExcelWorkbook();
     await wb.readCsvFile(filePath);
@@ -57,6 +63,7 @@ export class WorkbookBuilder {
     return builder;
   }
 
+  /** Add a sheet, optionally configuring it with the provided callback. */
   addSheet(opts: SheetOptions, configure: (sheet: SheetBuilder) => void): this {
     const name = opts.name;
     if (!name || name.length > 31) {
@@ -81,16 +88,19 @@ export class WorkbookBuilder {
     return this;
   }
 
+  /** Get a sheet by name. Returns undefined if not found. */
   getSheet(name: string): SheetBuilder | undefined {
     return this._sheets.find((s) => s.name === name);
   }
 
+  /** Get a sheet by index (0-based). Throws if out of range. */
   sheet(index: number): SheetBuilder {
     const s = this._sheets[index];
     if (!s) throw new Error(`[WorkbookBuilder] No sheet at index ${index}.`);
     return s;
   }
 
+  /** Write the workbook to a file. Returns path and file size. */
   async write(outputPath: string): Promise<WriteResult> {
     const resolved = this._safeResolve(outputPath);
     const dir = path.dirname(resolved);
@@ -118,6 +128,7 @@ export class WorkbookBuilder {
     return { filePath: resolved, sizeBytes: size };
   }
 
+  /** Write the workbook to an in-memory buffer. */
   async toBuffer(): Promise<Buffer> {
     await this._finalizeAll();
     const buf = await this._wb.xlsx.writeBuffer({
@@ -126,12 +137,17 @@ export class WorkbookBuilder {
     return Buffer.from(buf);
   }
 
+  /** Export the first sheet as a CSV string. */
   async toCsvString(): Promise<string> {
     return this._wb.writeCsv();
   }
 
-  async writeCsv(outputPath: string): Promise<void> {
-    await this._wb.writeCsvFile(path.resolve(outputPath));
+  /** Write the first sheet as a CSV file. Returns path and file size. */
+  async writeCsv(outputPath: string): Promise<WriteResult> {
+    const resolved = this._safeResolve(outputPath);
+    await this._wb.writeCsvFile(resolved);
+    const { size } = await fs.promises.stat(resolved);
+    return { filePath: resolved, sizeBytes: size };
   }
 
   private _safeResolve(filePath: string): string {
@@ -145,10 +161,12 @@ export class WorkbookBuilder {
     return resolved;
   }
 
+  /** All registered sheets. */
   get sheets(): SheetBuilder[] {
     return this._sheets;
   }
 
+  /** The underlying excelts Workbook instance. */
   get workbook(): ExcelWorkbook {
     return this._wb;
   }
