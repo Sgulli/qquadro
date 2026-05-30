@@ -14,6 +14,7 @@ import { installChartSupport } from "@cj-tech-master/excelts/chart";
 
 installChartSupport();
 
+import { type ColumnMap, type ColumnSchemaMap, createColumnMap } from "./column-map.js";
 import { colLetter, resolveAddr, resolveRange } from "./coords.js";
 import { isFormula, toExcelValue, toFormulaValue } from "./formulas.js";
 import { applyChartMixin } from "./mixins/charts.js";
@@ -94,6 +95,18 @@ export class SheetBuilder {
   columns(defs: ColumnDef[]): this {
     this._columns = defs;
     return this;
+  }
+
+  /** Define columns explicitly and return a typed ColumnMap for safe references. */
+  defineColumns<T extends ColumnSchemaMap>(schema: T): ColumnMap<T> {
+    const map = createColumnMap(schema, () => ({
+      rowCount: this._rowCount,
+      headerWritten: this._headerWritten,
+    }));
+    this._columns = Object.values(map).map((ref) =>
+      (ref as import("./column-map.js").ColumnRef).toColumnDef(),
+    );
+    return map;
   }
 
   /** Append a single column definition. */

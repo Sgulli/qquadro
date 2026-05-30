@@ -34,6 +34,8 @@
 
 // ── Builders ────────────────────────────────────────────────────────────────
 
+export type { ColumnMap, ColumnSchema, ColumnSchemaMap } from "./column-map.js";
+export { ColumnRef, createColumnMap } from "./column-map.js";
 export { RangeBuilder } from "./range-builder.js";
 export { SheetBuilder } from "./sheet-builder.js";
 export { WorkbookBuilder } from "./workbook-builder.js";
