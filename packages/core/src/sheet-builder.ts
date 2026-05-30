@@ -21,6 +21,7 @@ import { applyConditionalFormattingMixin } from "./mixins/conditional-formatting
 import { applyDataValidationMixin } from "./mixins/data-validation.js";
 import { applyAutoFilter, applyFreeze, applyMerge, applyStyleRange } from "./mixins/format.js";
 import { applyMediaMixin } from "./mixins/media.js";
+import { RangeBuilder } from "./range-builder.js";
 import { applyStyle, formatHeaderFooterSection } from "./style-presets.js";
 import type {
   Addr,
@@ -232,6 +233,11 @@ export class SheetBuilder {
     const r = range ?? (this._columns.length ? `A1:${colLetter(this._columns.length)}1` : "A1");
     applyAutoFilter(this._ws, r);
     return this;
+  }
+
+  /** Create a RangeBuilder for fluent range operations (style, validation, conditional formatting). */
+  range(spec: CellRange): RangeBuilder {
+    return new RangeBuilder(this as unknown as import("./range-builder.js").SheetLike, spec);
   }
 
   /** Add a structured table to the sheet. */

@@ -34,6 +34,7 @@
 
 // ── Builders ────────────────────────────────────────────────────────────────
 
+export { RangeBuilder } from "./range-builder.js";
 export { SheetBuilder } from "./sheet-builder.js";
 export { WorkbookBuilder } from "./workbook-builder.js";
 
